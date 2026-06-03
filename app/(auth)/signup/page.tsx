@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TriangleAlert } from "lucide-react";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -65,7 +66,8 @@ export default function SignupPage() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="flex gap-2">
+              <TriangleAlert />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
