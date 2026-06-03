@@ -1,6 +1,5 @@
-// src/app/layout.tsx
 import React from "react";
-import "@/app/globals.css"; // Your Tailwind/Shadcn global styles
+import "@/app/globals.css";
 
 export const metadata = {
   title: "Incident Tracker",
