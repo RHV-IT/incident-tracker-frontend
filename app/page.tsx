@@ -169,8 +169,7 @@ export default function LandingReportPage() {
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   <AlertTitle>Success</AlertTitle>
                   <AlertDescription>
-                    Your incident report has been securely logged into the
-                    system. Thank you for helping keep our infrastructure safe.
+                    Your incident report has been logged into the system.
                   </AlertDescription>
                 </Alert>
               )}
