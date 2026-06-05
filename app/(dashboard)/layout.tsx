@@ -1,9 +1,9 @@
 // src/app/(dashboard)/layout.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ShieldAlert,
   LayoutDashboard,
@@ -26,6 +26,23 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.replace("/login");
+    } else {
+      setIsAuthenticated(true);
+    }
+  }, [router]);
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.replace("/login");
+  };
 
   const navigationItems: NavigationItem[] = [
     {
@@ -48,9 +65,18 @@ export default function DashboardLayout({
     },
   ];
 
-  const handleLogout = () => {
-    // Backend logout configuration logic will integrate here
-  };
+  if (!isAuthenticated) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background text-muted-foreground">
+        <div className="flex flex-col items-center gap-2">
+          <ShieldAlert className="h-8 w-8 text-destructive animate-pulse" />
+          <p className="text-sm font-medium tracking-wide">
+            Verifying session...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-muted/20">
@@ -108,7 +134,6 @@ export default function DashboardLayout({
             <ShieldAlert className="h-5 w-5 text-destructive" />
             <span>IncidentTracker</span>
           </Link>
-          {/* Mobile responsive popovers or alternative execution logic can mount cleanly right here */}
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">

@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,8 +36,26 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    // Backend authentication integration occurs here
-    setIsLoading(false);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_apiurl}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        },
+      );
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data);
+      }
+    } catch (e) {
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -90,15 +107,6 @@ export default function LoginPage() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
-          <p className="text-sm text-center text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/signup"
-              className="font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Sign up
-            </Link>
-          </p>
         </CardFooter>
       </form>
     </Card>
