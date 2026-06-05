@@ -63,7 +63,7 @@ export default function DashboardLayout({
     },
     {
       label: "Report an Incident",
-      href: "/dashboard/report",
+      href: "/",
       icon: FilePlus2,
       variant: pathname === "/dashboard/report" ? "default" : "ghost",
     },

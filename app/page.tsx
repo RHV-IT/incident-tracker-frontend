@@ -125,6 +125,8 @@ export default function LandingReportPage() {
     }
   };
 
+  const token = localStorage.getItem("token");
+
   return (
     <div className="min-h-screen bg-muted/20 flex flex-col">
       {/* 1. Global Navigation Top Bar */}
@@ -133,12 +135,23 @@ export default function LandingReportPage() {
           <ShieldAlert className="h-6 w-6 text-destructive" />
           <span>IncidentTracker</span>
         </div>
-        <Link href="/login" passHref>
-          <Button variant="outline" size="sm" className="gap-2">
-            <LogIn className="h-4 w-4" />
-            Personnel Login
-          </Button>
-        </Link>
+        {token ? (
+          <Link href="/dashboard" passHref>
+            <Button variant="outline" size="sm" className="gap-2">
+              <LogIn className="h-4 w-4" />
+              Dashboard
+            </Button>
+          </Link>
+        ) : (
+          <>
+            <Link href="/login" passHref>
+              <Button variant="outline" size="sm" className="gap-2">
+                <LogIn className="h-4 w-4" />
+                Personnel Login
+              </Button>
+            </Link>
+          </>
+        )}
       </header>
 
       {/* 2. Main Layout Viewport Form Container */}

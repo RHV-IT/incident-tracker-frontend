@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -119,6 +120,14 @@ export default function LoginPage() {
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
         </CardFooter>
+        <div className="text-center">
+          <Link
+            href="/"
+            className="text-sm text-muted-foreground hover:underline"
+          >
+            Report an Incident
+          </Link>
+        </div>
       </form>
     </Card>
   );
