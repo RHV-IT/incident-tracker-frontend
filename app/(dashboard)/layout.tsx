@@ -13,12 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface NavigationItem {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  variant: "default" | "ghost";
-}
+import { NavigationItem, SuperAdminNavigationItem } from "./types/navTypes";
 
 export default function DashboardLayout({
   children,
@@ -29,6 +24,7 @@ export default function DashboardLayout({
   const router = useRouter();
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -63,6 +59,15 @@ export default function DashboardLayout({
       href: "/dashboard/settings",
       icon: Settings,
       variant: pathname === "/dashboard/settings" ? "default" : "ghost",
+    },
+  ];
+
+  const superAdminNavItems: SuperAdminNavigationItem[] = [
+    {
+      label: "Add User",
+      href: "/dashboard/register",
+      icon: FilePlus2,
+      variant: pathname === "/dashboard/add-user" ? "default" : "ghost",
     },
   ];
 
@@ -112,6 +117,28 @@ export default function DashboardLayout({
               </Link>
             );
           })}
+          {user.role === "superadmin" && (
+            <>
+              {superAdminNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all group",
+                      item.variant === "default"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </>
+          )}
         </nav>
 
         <div className="mt-auto px-2 border-t pt-4">
