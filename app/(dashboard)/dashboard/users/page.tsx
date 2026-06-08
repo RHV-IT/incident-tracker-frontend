@@ -52,7 +52,7 @@ export default function SuperAdminUsersPage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_apiurl}/user?email=${encodeURIComponent(searchEmail.trim())}`,
+        `${process.env.NEXT_PUBLIC_apiurl}/user?email=${searchEmail.trim()}`,
         {
           method: "GET",
           headers: {
