@@ -12,6 +12,7 @@ import {
   User,
   ChevronLeft,
   Menu,
+  LockKeyhole,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -80,6 +81,12 @@ export default function DashboardLayout({
       href: "/dashboard/users",
       icon: User,
       variant: pathname === "/dashboard/users" ? "default" : "ghost",
+    },
+    {
+      label: "Reset Password",
+      href: "dashboard/resetpassword",
+      icon: LockKeyhole,
+      variant: pathname === "/dashboard/resetpassword" ? "default" : "ghost",
     },
   ];
 
