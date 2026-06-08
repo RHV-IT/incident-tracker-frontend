@@ -9,27 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner"; // Import directly from sonner
-import { ChevronLeft, ChevronRight, PlusCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // --- Type Definitions matching Go Backend ---
@@ -74,28 +57,8 @@ export default function IncidentTracker() {
     total_pages: 1,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  // Form State
-  const [formData, setFormData] = useState<IncidentReport>({
-    reporterName: "",
-    department: "",
-    position: "",
-    contactInfo: "",
-    dateOfIncident: "",
-    timeOfIncident: "",
-    locationOfIncident: "",
-    typeOfIncident: "",
-    peopleInvolved: "",
-    descriptionOfIncident: "",
-    immediateActionTaken: "",
-    injuryOrDamage: "",
-    severityLevel: "minor",
-    supervisorNotified: "",
-    recommendedPreventiveAction: "",
-  });
-
   const router = useRouter();
+
   // Fetch Incidents from Backend
   const fetchIncidents = async (page: number) => {
     setIsLoading(true);
@@ -109,17 +72,21 @@ export default function IncidentTracker() {
           },
         },
       );
-      if (!res.ok) throw new Error("Failed to fetch data");
 
+      // Handle token expiration / unauthorized states
       if (res.status === 401) {
+        toast.error("Session expired. Please log in again.");
         router.replace("/login");
+        return;
       }
+
+      if (!res.ok) throw new Error("Failed to fetch data");
 
       const result: PaginatedIncidentResponse = await res.json();
       setIncidents(result.data || []);
       setPagination(result.pagination);
     } catch (error) {
-      toast.error("Could not load incidents from server."); // Elegant fallback error toast
+      toast.error("Could not load incidents from server.");
     } finally {
       setIsLoading(false);
     }
@@ -128,71 +95,6 @@ export default function IncidentTracker() {
   useEffect(() => {
     fetchIncidents(pagination.current_page);
   }, [pagination.current_page]);
-
-  // Handle Form Inputs
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSeverityChange = (value: SeverityLevel) => {
-    setFormData((prev) => ({ ...prev, severityLevel: value }));
-  };
-
-  // Submit Incident using modern Sonner Promises
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // 1. Define the backend request promise
-    const submitPromise = async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_apiurl}/incidents`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Failed to report incident");
-      }
-      return await res.json();
-    };
-
-    // 2. Feed the promise to Sonner to manage the notification states flawlessly
-    toast.promise(submitPromise(), {
-      loading: "Submitting report to system...",
-      success: () => {
-        setIsDialogOpen(false);
-        // Reset Form
-        setFormData({
-          reporterName: "",
-          department: "",
-          position: "",
-          contactInfo: "",
-          dateOfIncident: "",
-          timeOfIncident: "",
-          locationOfIncident: "",
-          typeOfIncident: "",
-          peopleInvolved: "",
-          descriptionOfIncident: "",
-          immediateActionTaken: "",
-          injuryOrDamage: "",
-          severityLevel: "minor",
-          supervisorNotified: "",
-          recommendedPreventiveAction: "",
-        });
-        // Refresh Current View
-        fetchIncidents(pagination.current_page);
-        return "Incident report submitted successfully.";
-      },
-      error: (err) => err.message || "An unknown submission error occurred.",
-    });
-  };
 
   const getSeverityBadgeClass = (level: SeverityLevel) => {
     switch (level) {
@@ -220,204 +122,6 @@ export default function IncidentTracker() {
             Manage, view, and report workplace safety and technical incidents.
           </p>
         </div>
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <PlusCircle className="h-4 w-4" /> Report Incident
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>File New Incident Report</DialogTitle>
-              <DialogDescription>
-                Ensure all mandatory workplace incident fields are accurately
-                documented.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Reporter Name</label>
-                  <Input
-                    name="reporterName"
-                    value={formData.reporterName}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Department</label>
-                  <Input
-                    name="department"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Position</label>
-                  <Input
-                    name="position"
-                    value={formData.position}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Contact Info</label>
-                  <Input
-                    name="contactInfo"
-                    value={formData.contactInfo}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Date of Incident
-                  </label>
-                  <Input
-                    type="date"
-                    name="dateOfIncident"
-                    value={formData.dateOfIncident}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Time of Incident
-                  </label>
-                  <Input
-                    type="time"
-                    name="timeOfIncident"
-                    value={formData.timeOfIncident}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Location</label>
-                  <Input
-                    name="locationOfIncident"
-                    value={formData.locationOfIncident}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Type of Incident
-                  </label>
-                  <Input
-                    name="typeOfIncident"
-                    placeholder="e.g. Injury, Equipment Failure"
-                    value={formData.typeOfIncident}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Severity Level</label>
-                <Select
-                  value={formData.severityLevel}
-                  onValueChange={handleSeverityChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select severity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="near miss">Near Miss</SelectItem>
-                    <SelectItem value="minor">Minor</SelectItem>
-                    <SelectItem value="major">Major</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">People Involved</label>
-                <Input
-                  name="peopleInvolved"
-                  placeholder="Names or count"
-                  value={formData.peopleInvolved}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Description of Incident
-                </label>
-                <Textarea
-                  name="descriptionOfIncident"
-                  value={formData.descriptionOfIncident}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Immediate Action Taken
-                </label>
-                <Textarea
-                  name="immediateActionTaken"
-                  value={formData.immediateActionTaken}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Injury or Damage Details
-                </label>
-                <Input
-                  name="injuryOrDamage"
-                  value={formData.injuryOrDamage}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Supervisor Notified
-                  </label>
-                  <Input
-                    name="supervisorNotified"
-                    value={formData.supervisorNotified}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Recommended Preventive Action
-                  </label>
-                  <Input
-                    name="recommendedPreventiveAction"
-                    value={formData.recommendedPreventiveAction}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit">Submit Report</Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
 
       <Card>

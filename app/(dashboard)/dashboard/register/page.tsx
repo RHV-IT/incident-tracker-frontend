@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -81,6 +82,12 @@ export default function RegisterPage() {
           }),
         },
       );
+
+      if (response.status === 401) {
+        toast.error("Session expired please login again");
+        router.replace("/login");
+        return;
+      }
 
       if (response.ok) {
         setSuccess(true);
