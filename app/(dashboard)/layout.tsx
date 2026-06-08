@@ -7,7 +7,6 @@ import {
   ShieldAlert,
   LayoutDashboard,
   FilePlus2,
-  Settings,
   LogOut,
   UserPlus,
   User,
@@ -66,12 +65,6 @@ export default function DashboardLayout({
       href: "/",
       icon: FilePlus2,
       variant: pathname === "/dashboard/report" ? "default" : "ghost",
-    },
-    {
-      label: "Settings",
-      href: "/dashboard/settings",
-      icon: Settings,
-      variant: pathname === "/dashboard/settings" ? "default" : "ghost",
     },
   ];
 
