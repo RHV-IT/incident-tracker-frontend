@@ -30,6 +30,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner"; // Import directly from sonner
 import { ChevronLeft, ChevronRight, PlusCircle, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // --- Type Definitions matching Go Backend ---
 export type SeverityLevel = "near miss" | "minor" | "major" | "critical";
@@ -94,6 +95,7 @@ export default function IncidentTracker() {
     recommendedPreventiveAction: "",
   });
 
+  const router = useRouter();
   // Fetch Incidents from Backend
   const fetchIncidents = async (page: number) => {
     setIsLoading(true);
@@ -108,6 +110,10 @@ export default function IncidentTracker() {
         },
       );
       if (!res.ok) throw new Error("Failed to fetch data");
+
+      if (res.status === 401) {
+        router.replace("/login");
+      }
 
       const result: PaginatedIncidentResponse = await res.json();
       setIncidents(result.data || []);
