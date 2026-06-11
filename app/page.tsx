@@ -41,6 +41,7 @@ export default function LandingReportPage() {
   const [supervisorNotified, setSupervisorNotified] = useState("");
   const [recommendedPreventiveAction, setRecommendedPreventiveAction] =
     useState("");
+  const [incidentStatus, setIncidentStatus] = useState("unresolved");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +50,7 @@ export default function LandingReportPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     setToken(token);
-  });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -62,7 +63,8 @@ export default function LandingReportPage() {
       !locationOfIncident ||
       !typeOfIncident ||
       !descriptionOfIncident ||
-      !severityLevel
+      !severityLevel ||
+      !incidentStatus
     ) {
       setError("Please complete all required fields (*).");
       return;
@@ -78,7 +80,6 @@ export default function LandingReportPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          // Maps cleanly to the IncidentReport struct fields in types.go
           body: JSON.stringify({
             reporterName,
             department,
@@ -92,16 +93,16 @@ export default function LandingReportPage() {
             descriptionOfIncident,
             immediateActionTaken,
             injuryOrDamage,
-            severityLevel, // "near miss", "minor", "major", or "critical"
+            severityLevel,
             supervisorNotified,
             recommendedPreventiveAction,
+            incidentStatus,
           }),
         },
       );
 
       if (response.ok) {
         setSuccess(true);
-        // Clear all form inputs
         setReporterName("");
         setDepartment("");
         setPosition("");
@@ -117,6 +118,7 @@ export default function LandingReportPage() {
         setSeverityLevel("");
         setSupervisorNotified("");
         setRecommendedPreventiveAction("");
+        setIncidentStatus("unresolved");
       } else {
         const data = await response.json();
         setError(data.message || "Failed to submit report. Please try again.");
@@ -133,7 +135,6 @@ export default function LandingReportPage() {
 
   return (
     <div className="min-h-screen bg-muted/20 flex flex-col">
-      {/* 1. Global Navigation Top Bar */}
       <header className="w-full bg-background border-b sticky top-0 z-50 px-4 lg:px-8 h-16 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
           <ShieldAlert className="h-6 w-6 text-destructive" />
@@ -147,18 +148,15 @@ export default function LandingReportPage() {
             </Button>
           </Link>
         ) : (
-          <>
-            <Link href="/login" passHref>
-              <Button variant="outline" size="sm" className="gap-2">
-                <LogIn className="h-4 w-4" />
-                Personnel Login
-              </Button>
-            </Link>
-          </>
+          <Link href="/login" passHref>
+            <Button variant="outline" size="sm" className="gap-2">
+              <LogIn className="h-4 w-4" />
+              Personnel Login
+            </Button>
+          </Link>
         )}
       </header>
 
-      {/* 2. Main Layout Viewport Form Container */}
       <main className="flex-1 flex justify-center items-start p-4 sm:p-6 lg:p-8">
         <Card className="w-full max-w-4xl border-muted-foreground/20 shadow-xl bg-background">
           <CardHeader className="space-y-1 text-center border-b pb-6">
@@ -191,7 +189,6 @@ export default function LandingReportPage() {
                 </Alert>
               )}
 
-              {/* SECTION: Reporter Information */}
               <div>
                 <h3 className="text-lg font-semibold border-b pb-2 mb-4 text-muted-foreground">
                   1. Reporter Information
@@ -246,7 +243,6 @@ export default function LandingReportPage() {
                 </div>
               </div>
 
-              {/* SECTION: Incident Metadata Details */}
               <div>
                 <h3 className="text-lg font-semibold border-b pb-2 mb-4 text-muted-foreground">
                   2. Incident Specifics
@@ -291,7 +287,7 @@ export default function LandingReportPage() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="typeOfIncident">
                       Type of Incident{" "}
@@ -299,7 +295,7 @@ export default function LandingReportPage() {
                     </Label>
                     <Input
                       id="typeOfIncident"
-                      placeholder="Patient Fall, Equipment Malfunction, Needle stick..."
+                      placeholder="Patient Fall, Equipment Malfunction..."
                       value={typeOfIncident}
                       onChange={(e) => setTypeOfIncident(e.target.value)}
                       disabled={isLoading}
@@ -320,7 +316,6 @@ export default function LandingReportPage() {
                         <SelectValue placeholder="Select assessed severity" />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* Values explicitly configured to support SeverityLevel enum in Go backend */}
                         <SelectItem value="near miss">Near Miss</SelectItem>
                         <SelectItem value="minor">Minor</SelectItem>
                         <SelectItem value="major">Major</SelectItem>
@@ -328,10 +323,30 @@ export default function LandingReportPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="incidentStatus">
+                      Incident Status{" "}
+                      <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={incidentStatus}
+                      onValueChange={(value) => setIncidentStatus(value)}
+                      disabled={isLoading}
+                      required
+                    >
+                      <SelectTrigger id="incidentStatus">
+                        <SelectValue placeholder="Select current status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unresolved">Unresolved</SelectItem>
+                        <SelectItem value="inprogress">In Progress</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
-              {/* SECTION: Situational Assessment Narrative Descriptions */}
               <div>
                 <h3 className="text-lg font-semibold border-b pb-2 mb-4 text-muted-foreground">
                   3. Situational Description &amp; Actions Taken
@@ -341,7 +356,7 @@ export default function LandingReportPage() {
                     <Label htmlFor="peopleInvolved">People Involved</Label>
                     <Input
                       id="peopleInvolved"
-                      placeholder="Names or identifying context of personnel, witnesses, or patient references"
+                      placeholder="Names or identifying context of personnel, witnesses..."
                       value={peopleInvolved}
                       onChange={(e) => setPeopleInvolved(e.target.value)}
                       disabled={isLoading}
@@ -382,7 +397,7 @@ export default function LandingReportPage() {
                     <Textarea
                       id="injuryOrDamage"
                       rows={2}
-                      placeholder="Describe any injuries sustained or equipment assets damaged, if applicable..."
+                      placeholder="Describe any injuries sustained or equipment assets damaged..."
                       value={injuryOrDamage}
                       onChange={(e) => setInjuryOrDamage(e.target.value)}
                       disabled={isLoading}
