@@ -177,16 +177,6 @@ export default function Dashboard() {
               departmental incident records.
             </p>
           </div>
-          <Button
-            onClick={() => {
-              localStorage.removeItem("token");
-              router.push("/login");
-            }}
-            variant="outline"
-            size="sm"
-          >
-            Logout
-          </Button>
         </CardHeader>
         <CardContent className="pt-6 px-0 sm:px-6">
           {loading ? (
