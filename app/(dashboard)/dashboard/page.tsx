@@ -112,6 +112,7 @@ export default function Dashboard() {
       }
 
       const resData: IncidentResponse = await response.json();
+      console.log(resData);
       setIncidents(resData.data || []);
       setPagination(resData.pagination);
     } catch (error: any) {
