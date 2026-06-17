@@ -32,11 +32,19 @@ import {
   FileText,
   ShieldCheck,
   Activity,
+  RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export type SeverityLevel = "near miss" | "minor" | "major" | "critical";
 export type IncidentStatus = "unresolved" | "inprogress" | "resolved";
+
+// Client-side source of truth matching the backend constraints
+const VALID_STATUSES: { value: IncidentStatus; label: string }[] = [
+  { value: "unresolved", label: "Unresolved" },
+  { value: "inprogress", label: "In Progress" },
+  { value: "resolved", label: "Resolved" },
+];
 
 export interface IncidentReport {
   id: number;
@@ -77,6 +85,7 @@ export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedIncident, setSelectedIncident] =
     useState<IncidentReport | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -112,7 +121,6 @@ export default function Dashboard() {
       }
 
       const resData: IncidentResponse = await response.json();
-      console.log(resData);
       setIncidents(resData.data || []);
       setPagination(resData.pagination);
     } catch (error: any) {
@@ -125,6 +133,61 @@ export default function Dashboard() {
   useEffect(() => {
     fetchIncidents(currentPage);
   }, [currentPage]);
+
+  // Handler to perform backend state modification
+  const handleStatusChange = async (newStatus: IncidentStatus) => {
+    if (!selectedIncident) return;
+
+    // Minor optimization: Prevent redundant API calls if selecting the same status
+    if (selectedIncident.incidentStatus === newStatus) return;
+
+    setUpdatingStatus(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_apiurl}/incidents/${selectedIncident.id}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        },
+      );
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error(
+            "Forbidden: You are not allowed to update this incident (Department mismatch)",
+          );
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to update incident status");
+      }
+
+      const updatedIncident: IncidentReport = await response.json();
+
+      // Update local detailed view data context
+      setSelectedIncident(updatedIncident);
+
+      // Sync list state tracking matrix updates smoothly
+      setIncidents((prev) =>
+        prev.map((inc) =>
+          inc.id === updatedIncident.id ? updatedIncident : inc,
+        ),
+      );
+
+      toast.success(
+        `Status updated to ${formatStatusText(newStatus)} successfully`,
+      );
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred while updating status");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   const handlePageChange = (newPage: number) => {
     if (pagination && newPage >= 1 && newPage <= pagination.total_pages) {
@@ -309,7 +372,6 @@ export default function Dashboard() {
         open={!!selectedIncident}
         onOpenChange={(open) => !open && setSelectedIncident(null)}
       >
-        {/* Applied explicit overrides (!w and !max-w) to bypass library defaults and fill available desktop real estate */}
         <DialogContent className="!max-w-7xl !w-[94vw] max-h-[92vh] overflow-y-auto p-6 md:p-8 rounded-xl border shadow-2xl bg-background">
           {selectedIncident && (
             <div className="space-y-6">
@@ -325,14 +387,48 @@ export default function Dashboard() {
                       documentation and risk assessment registry parameters.
                     </DialogDescription>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+
+                  {/* Enhanced Interactive Action Control Block */}
+                  <div className="flex flex-wrap items-center gap-3 shrink-0 bg-muted/40 p-2 rounded-lg border border-muted">
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="status-select"
+                        className="text-xs font-bold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Manage Status:
+                      </label>
+                      <div className="relative flex items-center">
+                        <select
+                          id="status-select"
+                          value={selectedIncident.incidentStatus}
+                          disabled={updatingStatus}
+                          onChange={(e) =>
+                            handleStatusChange(e.target.value as IncidentStatus)
+                          }
+                          className={`text-xs font-semibold uppercase tracking-wider px-3 py-1.5 pr-8 rounded-md border appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-all ${getStatusBadgeClass(selectedIncident.incidentStatus)}`}
+                        >
+                          {VALID_STATUSES.map((statusItem) => (
+                            <option
+                              key={statusItem.value}
+                              value={statusItem.value}
+                              className="bg-background text-foreground uppercase tracking-normal font-normal"
+                            >
+                              {statusItem.label}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute right-2.5 pointer-events-none text-muted-foreground">
+                          {updatingStatus ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                          ) : (
+                            <RefreshCw className="h-3 w-3" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-4 w-px bg-muted hidden sm:block" />
                     <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${getStatusBadgeClass(selectedIncident.incidentStatus)}`}
-                    >
-                      {formatStatusText(selectedIncident.incidentStatus)}
-                    </span>
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${getSeverityBadgeClass(selectedIncident.severityLevel)}`}
+                      className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wider ${getSeverityBadgeClass(selectedIncident.severityLevel)}`}
                     >
                       {selectedIncident.severityLevel} Severity
                     </span>
@@ -342,7 +438,7 @@ export default function Dashboard() {
 
               {/* Master Layout Architecture System */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                {/* 1. TOP LEFT CONTAINER: Personnel Profiles & Metadata Metrics (Takes 1 Column) */}
+                {/* 1. TOP LEFT CONTAINER */}
                 <div className="lg:col-span-1 space-y-4">
                   <div className="bg-muted/30 p-5 rounded-xl border border-muted/70 shadow-sm space-y-5">
                     <div>
@@ -447,7 +543,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* 2. TOP RIGHT CONTAINER: Context Fields Ledger (Takes 2 Columns) */}
+                {/* 2. TOP RIGHT CONTAINER */}
                 <div className="lg:col-span-2 bg-muted/20 p-5 rounded-xl border border-muted/60 shadow-sm space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
@@ -508,7 +604,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* 3. BOTTOM CONTAINER: Full Width Preventive Action Area (Spans all 3 Columns) */}
+                {/* 3. BOTTOM CONTAINER */}
                 <div className="lg:col-span-3 bg-primary/5 p-5 rounded-xl border border-primary/20 shadow-sm space-y-2">
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                     <ShieldCheck className="h-3.5 w-3.5 text-primary" />{" "}
