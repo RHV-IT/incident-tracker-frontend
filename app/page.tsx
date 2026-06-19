@@ -179,9 +179,9 @@ export default function LandingReportPage() {
           <img
             src="/images/rhv logo.png"
             alt="RHV Logo"
-            width={120}
-            height={32}
-            className="h-8 w-auto"
+            width={90}
+            height={24}
+            className="h-6 w-auto"
           />
           <span>IncidentTracker</span>
         </div>

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   ShieldAlert,
   LayoutDashboard,
@@ -30,30 +31,6 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [user, setUser] = useState<any>({});
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-
-    if (!token) {
-      router.replace("/login");
-    } else {
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (e) {
-          console.error("Failed to parse user data", e);
-        }
-      }
-      setIsAuthenticated(true);
-    }
-  }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    router.replace("/login");
-  };
-
   const navigationItems: NavigationItem[] = [
     {
       label: "View Incidents",
@@ -65,7 +42,7 @@ export default function DashboardLayout({
       label: "Report an Incident",
       href: "/",
       icon: FilePlus2,
-      variant: pathname === "/dashboard/report" ? "default" : "ghost",
+      variant: pathname === "/" ? "default" : "ghost",
     },
   ];
 
@@ -90,6 +67,49 @@ export default function DashboardLayout({
     },
   ];
 
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.3, ease: "easeOut" },
+    },
+  };
+
+  const navContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    if (!token) {
+      router.replace("/login");
+    } else {
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {
+          console.error("Failed to parse user data", e);
+        }
+      }
+      setIsAuthenticated(true);
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    router.replace("/login");
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background text-muted-foreground">
@@ -105,7 +125,6 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-muted/20">
-      {/* Sidebar navigation with dynamic width transitions */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-20 hidden flex-col border-r bg-background p-4 md:flex transition-all duration-300 ease-in-out",
@@ -121,12 +140,18 @@ export default function DashboardLayout({
           <Link
             href="/dashboard"
             className={cn(
-              "flex items-center gap-2 font-semibold text-lg tracking-tight transition-all duration-200",
+              "flex items-center justify-center gap-1 font-semibold tracking-tight transition-all duration-200",
               !isSidebarOpen && "w-0 h-0 opacity-0 overflow-hidden",
             )}
           >
-            <ShieldAlert className="h-6 w-6 text-destructive shrink-0" />
-            <span>IncidentTracker</span>
+            <img
+              src="/images/rhv logo.png"
+              alt="RHV Logo"
+              width={90}
+              height={24}
+              className="h-6 w-auto"
+            />
+            <span className="text-sm">IncidentTracker</span>
           </Link>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -143,66 +168,98 @@ export default function DashboardLayout({
         </div>
 
         <nav className="flex-1 space-y-1 px-2" aria-label="Main Navigation">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                title={!isSidebarOpen ? item.label : undefined}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all group relative",
-                  item.variant === "default"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  !isSidebarOpen && "justify-center px-0",
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span
-                  className={cn(
-                    "transition-all duration-200 whitespace-nowrap",
-                    !isSidebarOpen &&
-                      "w-0 opacity-0 pointer-events-none hidden",
-                  )}
-                >
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
-          {user.role === "superadmin" && (
-            <>
-              {superAdminNavItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    title={!isSidebarOpen ? item.label : undefined}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all group relative",
-                      item.variant === "default"
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                      !isSidebarOpen && "justify-center px-0",
-                    )}
+          <motion.div
+            variants={navContainerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <motion.div key={item.href} variants={{ itemVariants }}>
+                  <motion.div
+                    whileHover={{ scale: 1.08 }}
+                    whileTap={{
+                      scale: 0.97,
+                      transition: {
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 18,
+                      },
+                    }}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span
+                    <Link
+                      href={item.href}
+                      title={!isSidebarOpen ? item.label : undefined}
                       className={cn(
-                        "transition-all duration-200 whitespace-nowrap",
-                        !isSidebarOpen &&
-                          "w-0 opacity-0 pointer-events-none hidden",
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all group relative",
+                        item.variant === "default"
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "text-muted-foreground hover:bg-blue-100 hover:text-foreground dark:hover:bg-slate-800",
+                        !isSidebarOpen && "justify-center px-0",
                       )}
                     >
-                      {item.label}
-                    </span>
-                  </Link>
-                );
-              })}
-            </>
-          )}
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span
+                        className={cn(
+                          "transition-all duration-200 whitespace-nowrap",
+                          !isSidebarOpen &&
+                            "w-0 opacity-0 pointer-events-none hidden",
+                        )}
+                      >
+                        {item.label}
+                      </span>
+                    </Link>
+                  </motion.div>
+                </motion.div>
+              );
+            })}
+            {user.role === "superadmin" && (
+              <>
+                {superAdminNavItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <motion.div key={item.href} variants={{ itemVariants }}>
+                      <motion.div
+                        whileHover={{ scale: 1.08 }}
+                        whileTap={{
+                          scale: 0.97,
+                          transition: {
+                            type: "spring",
+                            stiffness: 500,
+                            damping: 18,
+                          },
+                        }}
+                      >
+                        <Link
+                          href={item.href}
+                          title={!isSidebarOpen ? item.label : undefined}
+                          className={cn(
+                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all group relative",
+                            item.variant === "default"
+                              ? "bg-blue-600 text-white hover:bg-blue-700"
+                              : "text-muted-foreground hover:bg-blue-100 hover:text-foreground dark:hover:bg-slate-800",
+                            !isSidebarOpen && "justify-center px-0",
+                          )}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span
+                            className={cn(
+                              "transition-all duration-200 whitespace-nowrap",
+                              !isSidebarOpen &&
+                                "w-0 opacity-0 pointer-events-none hidden",
+                            )}
+                          >
+                            {item.label}
+                          </span>
+                        </Link>
+                      </motion.div>
+                    </motion.div>
+                  );
+                })}
+              </>
+            )}
+          </motion.div>
         </nav>
 
         <div className="mt-auto px-2 border-t pt-4">
@@ -227,7 +284,6 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* Main layout container viewport spacing shifts based on sidebar toggle state */}
       <div
         className={cn(
           "flex flex-1 flex-col transition-all duration-300 ease-in-out",
@@ -239,7 +295,13 @@ export default function DashboardLayout({
             href="/dashboard"
             className="flex items-center gap-2 font-semibold"
           >
-            <ShieldAlert className="h-5 w-5 text-destructive" />
+            <img
+              src="/images/rhv logo.png"
+              alt="RHV Logo"
+              width={90}
+              height={24}
+              className="h-6 w-auto"
+            />
             <span>IncidentTracker</span>
           </Link>
         </header>
