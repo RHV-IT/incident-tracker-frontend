@@ -1,182 +1,463 @@
 # Incident Tracker
 
-A production-ready incident management system built with Next.js, designed for workplace safety and technical incident reporting and tracking.
+A production-ready incident management system built with Next.js 16, designed for workplace safety and technical incident reporting and tracking.
+
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+- [Authentication](#authentication)
+- [API Integration](#api-integration)
+- [Roles & Permissions](#roles--permissions)
+- [Navigation](#navigation)
+- [Incident Data Structure](#incident-data-structure)
+- [Components](#components)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
 
 ## Features
 
-- **Incident Reporting**: View, manage, and track workplace safety incidents
-- **User Authentication**: Secure login/logout with JWT token management
-- **User Management**: Admin panel for registering and managing user accounts
-- **Role-Based Access**: Multi-tier role system (Reporter, Supervisor, Admin, Super Admin)
-- **Severity Classification**: Incident levels (Near Miss, Minor, Major, Critical) with color-coded badges
-- **User Status Management**: Enable/disable user accounts (Super Admin only)
-- **Password Override**: Administrative password reset capability (Super Admin only)
-- **Pagination**: Efficient incident list browsing with pagination controls
-- **Responsive Design**: Modern UI with Tailwind CSS and shadcn/ui components
-- **Collapsible Sidebar**: Smooth transition sidebar with role-based navigation
+- **Incident Reporting**: Multi-step public form for submitting workplace safety incidents
+- **Incident Management**: View, filter, and update incident status via dashboard
+- **User Authentication**: JWT-based login/logout with token persistence
+- **User Management**: Register new users (Admin+), enable/disable accounts (Super Admin)
+- **Password Override**: Administrative password reset (Super Admin only)
+- **Role-Based Access**: Four-tier role system (Reporter, Supervisor, Admin, Super Admin)
+- **Severity Classification**: Color-coded badges (Critical, Major, Minor, Near Miss)
+- **Status Tracking**: Resolved, In Progress, Unresolved with visual indicators
+- **Pagination**: Efficient incident list browsing
+- **Responsive Design**: Mobile-friendly sidebar and layouts
+- **Dark Mode**: Theme support via `next-themes`
+- **Toast Notifications**: Success/error feedback via `sonner`
+
+## Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 16.2.7 |
+| UI Library | React 19.2.4 |
+| Language | TypeScript 5 (strict mode) |
+| Styling | Tailwind CSS 4 |
+| Components | shadcn/ui 4.10.0, Radix UI 1.4.3 |
+| Icons | Lucide React |
+| Animations | Framer Motion |
+| Notifications | Sonner |
+| Themes | next-themes |
 
 ## Project Structure
 
 ```
 incidenttracker/
-├── app/
-│   ├── (auth)/login/page.tsx       # Authentication page
-│   ├── (dashboard)/                # Protected routes
-│   │   ├── dashboard/
-│   │   │   ├── page.tsx            # Incident listing & management
-│   │   │   ├── register/page.tsx   # User registration
-│   │   │   ├── users/page.tsx      # User access management (Super Admin)
-│   │   │   └── resetpassword/page.tsx # Password override (Super Admin)
-│   │   └── layout.tsx              # Dashboard layout with sidebar navigation
-│   ├── globals.css
-│   ├── layout.tsx
-│   └── page.tsx                    # Public incident reporting landing page
-├── components/ui/                  # shadcn/ui component library
-├── lib/utils.ts                    # Utility functions (cn helper)
-├── app/(dashboard)/types/navTypes.ts # Navigation type definitions
+├── .env                          # Environment variables (API URL)
+├── .gitignore
+├── AGENTS.md                     # AI agent guidelines
+├── README.md                     # This file
+├── eslint.config.mjs             # ESLint configuration
+├── next.config.ts                # Next.js configuration
 ├── package.json
-├── tsconfig.json
-├── postcss.config.mjs              # PostCSS/Tailwind configuration
-├── next.config.ts                  # Next.js configuration
-├── eslint.config.mjs               # ESLint configuration
-├── components.json                 # shadcn/ui configuration
-└── favicon.ico                     # Application icon
+├── postcss.config.mjs            # PostCSS/Tailwind configuration
+├── tsconfig.json                 # TypeScript configuration
+│
+├── app/
+│   ├── favicon.ico
+│   ├── globals.css               # Global styles + CSS variables
+│   ├── layout.tsx                # Root layout (HTML shell + Toaster)
+│   ├── page.tsx                  # PUBLIC: Multi-step incident reporting form
+│   │
+│   ├── (auth)/
+│   │   ├── layout.tsx            # Auth layout (centered card wrapper)
+│   │   └── login/
+│   │       └── page.tsx          # Login page (email/password, JWT)
+│   │
+│   └── (dashboard)/
+│       ├── layout.tsx            # Dashboard layout (sidebar + auth guard)
+│       ├── types/
+│       │   └── navTypes.ts       # NavigationItem type definitions
+│       └── dashboard/
+│           ├── page.tsx          # Incident listing table + detail dialog
+│           ├── register/
+│           │   └── page.tsx      # User registration (Admin+ only)
+│           ├── resetpassword/
+│           │   └── page.tsx      # Password override (Super Admin only)
+│           └── users/
+│               └── page.tsx      # User search/enable/disable (Super Admin)
+│
+├── components/
+│   └── ui/
+│       ├── alert.tsx            # Alert, AlertTitle, AlertDescription, AlertAction
+│       ├── button.tsx           # Button with variants and sizes
+│       ├── card.tsx             # Card, CardHeader, CardContent, CardFooter
+│       ├── dialog.tsx           # Dialog, DialogContent, DialogHeader
+│       ├── input.tsx            # Input field
+│       ├── label.tsx            # Form label (Radix-based)
+│       ├── select.tsx           # Select, SelectTrigger, SelectContent, SelectItem
+│       ├── sonner.tsx           # Themed toast notifications
+│       ├── table.tsx            # Table, TableHeader, TableBody, TableRow
+│       └── textarea.tsx         # Multi-line text input
+│
+├── lib/
+│   └── utils.ts                  # cn() utility (clsx + tailwind-merge)
+│
+└── public/
+    ├── images/
+    │   └── rhv logo.png
+    └── ...static assets
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm, yarn, pnpm, or bun
+
+### Installation
+
+```bash
+cd incidenttracker
+npm install
+```
+
+### Development
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Production Build
+
+```bash
+npm run build
+npm run start
+```
+
+### Linting
+
+```bash
+npm run lint
+```
+
+## Configuration
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+NEXT_PUBLIC_apiurl=http://localhost:3001/api/v1
+```
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `NEXT_PUBLIC_apiurl` | Base URL of the backend API | Yes |
+
+> **Note**: The `NEXT_PUBLIC_` prefix exposes the variable to the browser. Do not put sensitive server-only secrets here.
+
+## Authentication
+
+The application uses JWT token-based authentication:
+
+1. User logs in via `/login` with email and password
+2. Server returns `{ token, user }`
+3. Token and user data are stored in `localStorage`
+4. Subsequent API requests include `Authorization: Bearer ${token}` header
+5. On 401 responses, token is cleared and user is redirected to `/login`
+
+### Token Storage
+
+```typescript
+// Storing after login
+localStorage.setItem("token", token);
+localStorage.setItem("user", JSON.stringify(user));
+
+// Retrieving for API calls
+const token = localStorage.getItem("token");
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+```
+
+## API Integration
+
+### Base URL
+
+All API calls use the configured base URL:
+
+```typescript
+const baseUrl = process.env.NEXT_PUBLIC_apiurl;
+```
+
+### Endpoints
+
+| Method | Endpoint | Auth Required | Description |
+|--------|----------|---------------|-------------|
+| POST | `/auth/login` | No | Authenticate user, returns `{ token, user }` |
+| POST | `/auth/register` | Yes (Admin+) | Register new user |
+| GET | `/incidents?page=N&limit=10` | Yes | Fetch paginated incident list |
+| POST | `/incidents` | No | Create new incident report |
+| PATCH | `/incidents/{id}/status` | Yes | Update incident status |
+| GET | `/user?email={email}` | Yes (Super Admin) | Search user by email |
+| PUT | `/auth/enable` | Yes (Super Admin) | Enable user account |
+| PUT | `/auth/disable` | Yes (Super Admin) | Disable user account |
+| PUT | `/auth/resetpassword` | Yes (Super Admin) | Reset user password |
+
+### Request Headers
+
+```typescript
+const headers = {
+  Authorization: `Bearer ${token}`,
+  "Content-Type": "application/json",
+};
+```
+
+### Example API Call
+
+```typescript
+const response = await fetch(`${process.env.NEXT_PUBLIC_apiurl}/incidents?page=1&limit=10`, {
+  method: "GET",
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+});
+
+if (!response.ok) {
+  if (response.status === 401) {
+    localStorage.removeItem("token");
+    router.push("/login");
+  }
+  throw new Error("Failed to fetch incidents");
+}
+
+const data = await response.json();
+```
+
+## Roles & Permissions
+
+| Feature | Reporter | Supervisor | Admin | Super Admin |
+|---------|----------|------------|-------|-------------|
+| Submit incident reports (public) | Yes | Yes | Yes | Yes |
+| View dashboard incidents | Yes | Yes | Yes | Yes |
+| Submit reports via dashboard | Yes | Yes | Yes | Yes |
+| Register new users | No | No | Yes | Yes |
+| Manage users (enable/disable) | No | No | No | Yes |
+| Reset user passwords | No | No | No | Yes |
+
+### Checking Roles
+
+```typescript
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+// Check for Super Admin
+if (user.role === "superadmin") {
+  // Show Super Admin features
+}
+
+// Check for Admin or above
+if (user.role === "admin" || user.role === "superadmin") {
+  // Show Admin features
+}
 ```
 
 ## Navigation
 
-The application has two main navigation areas:
+### Public Routes
 
-**Public Landing Page (`/`)**
-- Incident reporting form for staff to submit new incidents
-- Links to login and dashboard (if authenticated)
+| Route | Description |
+|-------|-------------|
+| `/` | Multi-step incident reporting form |
+| `/login` | Authentication page |
 
-**Dashboard Sidebar (Protected Routes)**
-- **View Incidents**: Main incident listing page
-- **Report an Incident**: Incident submission page
-- **Add User** (Super Admin): User registration
-- **Users** (Super Admin): User access management
-- **Reset Password** (Super Admin): Password override terminal
+### Protected Routes (Dashboard)
 
-Sidebar features collapsible design with smooth transitions and role-based menu items.
+| Route | Access | Description |
+|-------|--------|-------------|
+| `/dashboard` | All authenticated users | Incident listing with pagination |
+| `/dashboard/register` | Admin+ | User registration form |
+| `/dashboard/users` | Super Admin | User search and status management |
+| `/dashboard/resetpassword` | Super Admin | Password override |
 
-## Authentication Flow
+### Sidebar Navigation
 
-The application uses a protected route structure:
-- `/login` - Public authentication page (in `(auth)` layout)
-- `/dashboard/*` - Protected routes (in `(dashboard)` layout with sidebar navigation)
-
-Login page includes a link to report an incident publicly.
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Configuration
-
-This application requires the following environment variable:
-
-- `NEXT_PUBLIC_apiurl` - The base URL of your backend API server
-
-## API Integration
-
-The frontend integrates with a backend API providing endpoints for:
-
-- `GET /incidents` - Fetch paginated incident reports
-- `POST /auth/login` - User authentication
-- `POST /auth/register` - User registration (authenticated)
-- `GET /user?email={email}` - Search user by email
-- `PUT /auth/{enable|disable}` - Toggle user account status
-- `PUT /auth/resetpassword` - Reset user password
-
-## Roles & Permissions
-
-| Role | Dashboard Access | Register Users | Manage Users | Password Reset |
-|------|-----------------|----------------|--------------|----------------|
-| Reporter | ✓ | ✗ | ✗ | ✗ |
-| Supervisor | ✓ | ✗ | ✗ | ✗ |
-| Admin | ✓ | ✓ | ✗ | ✗ |
-| Super Admin | ✓ | ✓ | ✓ | ✓ |
+The dashboard features a collapsible sidebar with:
+- **All users**: View Incidents, Report an Incident
+- **Super Admin only**: Add User, Users, Reset Password
+- **Logout** button
+- Mobile-responsive hamburger menu
 
 ## Incident Data Structure
 
-Each incident report includes:
-- Reporter details (name, department, position, contact info)
-- Incident timing (date, time)
-- Location and type classification
-- People involved
-- Description and immediate actions taken
-- Injury/damage assessment
-- Severity level and recommended preventive actions
+Each incident report contains:
 
-**Note**: The public reporting form is configured for hospital/staff use (e.g., "RHV Hospital Incident Reporting Form").
-
-## Learn More
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [shadcn/ui](https://ui.shadcn.com/) - component library used in this project.
-
-## Dependencies
-
-Key dependencies include:
-- `next` - React framework for production-ready applications
-- `react` / `react-dom` - UI library
-- `lucide-react` - Icon library
-- `radix-ui` - Primitive UI components
-- `sonner` - Toast notifications
-- `next-themes` - Dark mode support
-- `tailwind-merge` / `tw-animate-css` - Styling utilities
-
-## Styling
-
-This project uses:
-- Tailwind CSS for utility-first styling
-- CSS variables for theme customization
-- Dark mode support via `next-themes`
-
-## UI Components
-
-Built with [shadcn/ui](https://ui.shadcn.com/) primitive components:
-- **Dialog**: Modal overlays for incident detail views
-- **Alert**: Error and success message displays
-- **Card**: Content containers with header/content/footer structure
-- **Button**: Interactive actions with variants (default, outline, destructive)
-- **Input**: Text and email form fields
-- **Label**: Form field labels
-- **Select**: Dropdown selection for roles and severity levels
-- **Table**: Incident listing with pagination
-- **Textarea**: Multi-line text input for descriptions
-- **Toast**: Notifications via `sonner`
-- Custom styling with Tailwind CSS
-
-## Development Scripts
-
-```json
-"scripts": {
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start",
-  "lint": "eslint"
+```typescript
+interface Incident {
+  _id: string;
+  reporterName: string;
+  reporterEmail: string;
+  reporterDepartment: string;
+  reporterPosition: string;
+  reporterPhone: string;
+  incidentDate: string;
+  incidentTime: string;
+  incidentLocation: string;
+  incidentType: string;
+  severityLevel: "critical" | "major" | "minor" | "near miss";
+  description: string;
+  immediateActions: string;
+  peopleInvolved: string[];
+  witnesses: string[];
+  injuryDamage: string;
+  treatmentProvided: string;
+  equipmentInvolved: string;
+  rootCause: string;
+  preventiveActions: string;
+  status: "resolved" | "inprogress" | "unresolved";
+  createdAt: string;
+  updatedAt: string;
 }
 ```
 
-## TypeScript
+### Severity Levels
 
-This project uses TypeScript with strict mode enabled. Key type definitions:
-- `SeverityLevel` - Incident severity classification
-- `IncidentReport` - Complete incident data structure
-- `UserProfile` - User account structure
-- `NavigationItem` - Sidebar navigation configuration
+| Level | Color |
+|-------|-------|
+| Critical | Red |
+| Major | Orange |
+| Minor | Blue |
+| Near Miss | Gray |
+
+### Status Values
+
+| Status | Color |
+|--------|-------|
+| Resolved | Emerald |
+| In Progress | Amber |
+| Unresolved | Rose |
+
+## Components
+
+### UI Components (shadcn/ui)
+
+All components are in `components/ui/`:
+
+| Component | Variants/Options |
+|-----------|------------------|
+| `Button` | `default`, `outline`, `destructive`, `ghost`, `link` / `sm`, `default`, `lg`, `icon` |
+| `Input` | Standard input with focus/disabled states |
+| `Label` | Radix-based form labels |
+| `Textarea` | Multi-line text input |
+| `Select` | `SelectTrigger`, `SelectContent`, `SelectItem`, `SelectGroup`, `SelectLabel` |
+| `Card` | `CardHeader`, `CardContent`, `CardFooter`, `CardTitle`, `CardDescription` |
+| `Dialog` | `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter` |
+| `Alert` | `AlertTitle`, `AlertDescription`, `AlertAction` / `default`, `destructive` |
+| `Table` | `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`, `TableFooter` |
+| `Toaster` | Themed toast notifications with rich colors |
+
+### Form Patterns
+
+```typescript
+"use client";
+import { useState } from "react";
+import { toast } from "sonner";
+
+export default function FormComponent() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_APIurl}/endpoint`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error("Request failed");
+
+      toast.success("Operation successful");
+      resetForm();
+    } catch (error) {
+      toast.error("Operation failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+}
+```
+
+## Development
+
+### Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Create production build |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint checks |
+
+### TypeScript Configuration
+
+- Strict mode enabled
+- Path alias: `@/*` maps to `./*`
+- Target: ES2017
+- Module resolution: bundler
+
+### Code Conventions
+
+- Use `"use client"` directive for components with hooks
+- Destructure props at the top level
+- Use `cn()` from `@/lib/utils` for conditional classNames
+- Use `React.ComponentType<{ className?: string }>` for icon prop types
+- Handle 401 responses by clearing storage and redirecting to `/login`
+
+### Adding New Pages
+
+1. Create a new directory in `app/` with the route name
+2. Add a `page.tsx` file with the `"use client"` directive
+3. Export a default function component
+4. Add auth checks in `useEffect` if the route is protected
+
+## Troubleshooting
+
+### Common Issues
+
+**API calls failing with CORS**
+- Ensure the backend API allows requests from your frontend origin
+- Check that `NEXT_PUBLIC_apiurl` is correctly set
+
+**Authentication not persisting**
+- Verify `localStorage` is available (not in SSR context)
+- Check that the token is being stored correctly after login
+
+**Dashboard redirecting to login**
+- Clear browser localStorage and try again
+- Verify the backend is returning a valid token
+
+**Styles not applying**
+- Ensure `globals.css` is imported in `app/layout.tsx`
+- Check that Tailwind CSS is properly configured in `postcss.config.mjs`
+
+### Build Errors
+
+```bash
+# Clear Next.js cache and rebuild
+rm -rf .next
+npm run build
+```
+
+## Learn More
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Learn Next.js](https://nextjs.org/learn)
+- [shadcn/ui](https://ui.shadcn.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [TypeScript](https://www.typescriptlang.org/)
