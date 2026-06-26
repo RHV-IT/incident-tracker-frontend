@@ -33,7 +33,6 @@ import {
   ShieldCheck,
   Activity,
   RefreshCw,
-  FileSpreadsheet,
   AlertTriangle,
   Plus,
 } from "lucide-react";
@@ -65,11 +64,6 @@ export interface IncidentReport {
   timeOfIncident: string;
   locationOfIncident: string;
   incidentWardDept: string;
-  witnesses?: string;
-  witnessType?: string;
-  witnessWardDept?: string;
-  witnessJobTitle?: string;
-  witenssPhone?: string;
   isNearMiss: boolean;
   causeGroup: string;
   causes: string;
@@ -94,11 +88,11 @@ export interface IncidentReport {
 export interface IncidentManagement {
   id?: number;
   incidentId: number;
-  impactOnService: string;
-  contributoryFactors: string;
-  actionsTakenOutcomes: string;
-  recommendations: string;
-  lessonsLearned: string;
+  impactOnService: string; // What was the impact on the individual/service?
+  contributoryFactors: string; // CONTRIBUTORY FACTORS
+  actionsTakenOutcomes: string; // ACTION TAKEN AND OUTCOMES
+  recommendations: string; // RECOMMENDATIONS
+  lessonsLearned: string; // LESSONS LEARNED
   informedPatient: boolean;
   informedRelative: boolean;
   informedSeniorManager: boolean;
@@ -114,7 +108,7 @@ export interface IncidentManagement {
   ohsStaffName?: string;
   ohsStaffDob?: string;
   ohsStaffAddress?: string;
-  managerName: string;
+  managerName: string; // Name of Person in Charge (printed)
   managerSignature: boolean;
   managerDesignation: string;
   managerDate: string;
@@ -243,7 +237,7 @@ export default function Dashboard() {
         setManagementReport(null);
       } else {
         throw new Error(
-          "Failed to pull secondary administrative management logs",
+          "Failed to pull administrative management report fields.",
         );
       }
     } catch (error: any) {
@@ -260,9 +254,24 @@ export default function Dashboard() {
   useEffect(() => {
     if (selectedIncident) {
       fetchManagementReport(selectedIncident.id);
-      setMgmtForm((prev) => ({
-        ...prev,
-        incidentId: selectedIncident.id,
+      setMgmtForm({
+        impactOnService: "",
+        contributoryFactors: "",
+        actionsTakenOutcomes: "",
+        recommendations: "",
+        lessonsLearned: "",
+        informedPatient: false,
+        informedRelative: false,
+        informedSeniorManager: false,
+        informedPharmacist: false,
+        policeIncidentNumber: "",
+        informedOther: "",
+        riskSeverity: 1,
+        riskLikelihood: 1,
+        riskRating: 1,
+        ohsAbsenceOver3Days: false,
+        ohsActOfViolenceOrDanger: false,
+        ohsHospitalisationOver24Hours: false,
         ohsStaffName:
           selectedIncident.principalType === "staff"
             ? selectedIncident.principalName
@@ -271,7 +280,13 @@ export default function Dashboard() {
           selectedIncident.principalType === "staff"
             ? selectedIncident.principalDob
             : "",
-      }));
+        ohsStaffAddress: "",
+        managerName: "",
+        managerSignature: false,
+        managerDesignation: "",
+        managerDate: new Date().toISOString().split("T")[0],
+        incidentId: selectedIncident.id,
+      });
     }
   }, [selectedIncident]);
 
@@ -302,29 +317,25 @@ export default function Dashboard() {
       );
 
       if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error(
-            "Forbidden: You are not allowed to update this incident's status",
-          );
-        }
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to update incident status");
+        throw new Error(
+          "Failed to update incident pipeline registry status token.",
+        );
       }
 
       const updatedIncident: IncidentReport = await response.json();
-
       setSelectedIncident(updatedIncident);
       setIncidents((prev) =>
         prev.map((inc) =>
           inc.id === updatedIncident.id ? updatedIncident : inc,
         ),
       );
-
       toast.success(
-        `Status updated to ${formatStatusText(newStatus)} successfully`,
+        `Status shifted to ${formatStatusText(newStatus)} successfully.`,
       );
     } catch (error: any) {
-      toast.error(error.message || "An error occurred while updating status");
+      toast.error(
+        error.message || "Error modifying system configuration status.",
+      );
     } finally {
       setUpdatingStatus(false);
     }
@@ -351,42 +362,34 @@ export default function Dashboard() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error || "Failed to submit management report data fields.",
+          "Failed to process management metadata mapping variables.",
         );
       }
 
       const freshReport = await response.json();
       setManagementReport(freshReport);
       setIsAddingManagement(false);
-      toast.success("Management Report appended to dossier file successfully.");
-    } catch (error: any) {
-      toast.error(
-        error.message ||
-          "Network execution exception on database pipeline connection.",
+      toast.success(
+        "SECTION H & J documentation saved successfully to dossier.",
       );
+    } catch (error: any) {
+      toast.error(error.message || "Database execution error occurred.");
     } finally {
       setSubmittingManagement(false);
-    }
-  };
-
-  const handlePageChange = (newPage: number) => {
-    if (pagination && newPage >= 1 && newPage <= pagination.total_pages) {
-      setCurrentPage(newPage);
     }
   };
 
   const getSeverityBadgeClass = (severity: SeverityLevel) => {
     switch (severity) {
       case "critical":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800/50";
+        return "bg-red-100 text-red-800 border border-red-200";
       case "major":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800/50";
+        return "bg-orange-100 text-orange-800 border border-orange-200";
       case "minor":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50";
+        return "bg-blue-100 text-blue-800 border border-blue-200";
       case "near miss":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700";
+        return "bg-gray-100 text-gray-800 border border-gray-200";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -395,12 +398,11 @@ export default function Dashboard() {
   const getStatusBadgeClass = (status: IncidentStatus) => {
     switch (status) {
       case "resolved":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50";
+        return "bg-emerald-100 text-emerald-800 border border-emerald-200";
       case "inprogress":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50";
-      case "unresolved":
+        return "bg-amber-100 text-amber-800 border border-amber-200";
       default:
-        return "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50";
+        return "bg-rose-100 text-rose-800 border border-rose-200";
     }
   };
 
@@ -412,28 +414,28 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <Card className="border-muted/40 shadow-sm">
+      <Card className="border-muted/40 shadow-sm rounded-xl">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b gap-4">
           <div>
-            <CardTitle className="text-2xl font-bold tracking-tight">
-              Hospital Incident Logs
+            <CardTitle className="text-xl font-black uppercase tracking-tight text-foreground">
+              Hospital Incident Core Registry Logs
             </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">
               Internal directory of logged safety events, risk evaluations, and
-              departmental incident records.
+              institutional metrics
             </p>
           </div>
         </CardHeader>
         <CardContent className="pt-6 px-0 sm:px-6">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground font-medium animate-pulse">
-                Retrieving data logs...
+            <div className="flex flex-col items-center justify-center py-20 gap-2">
+              <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+              <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider animate-pulse">
+                Synchronizing data matrix parameters...
               </p>
             </div>
           ) : incidents.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
+            <div className="text-center py-16 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               No reported incident files found matching your profile.
             </div>
           ) : (
@@ -442,26 +444,26 @@ export default function Dashboard() {
                 <Table>
                   <TableHeader className="bg-muted/40">
                     <TableRow>
-                      <TableHead className="font-semibold text-foreground py-3.5 pl-4">
+                      <TableHead className="font-bold text-xs uppercase text-foreground py-3 pl-4">
                         Date
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground py-3.5">
+                      <TableHead className="font-bold text-xs uppercase text-foreground py-3">
                         Reporter
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground py-3.5">
+                      <TableHead className="font-bold text-xs uppercase text-foreground py-3">
                         Incident Ward/Dept
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground py-3.5">
+                      <TableHead className="font-bold text-xs uppercase text-foreground py-3">
                         Cause Group
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground py-3.5">
-                        Severity
+                      <TableHead className="font-bold text-xs uppercase text-foreground py-3">
+                        Severity Matrix
                       </TableHead>
-                      <TableHead className="font-semibold text-foreground py-3.5">
+                      <TableHead className="font-bold text-xs uppercase text-foreground py-3">
                         Status
                       </TableHead>
-                      <TableHead className="text-right font-semibold text-foreground py-3.5 pr-4">
-                        Action
+                      <TableHead className="text-right font-bold text-xs uppercase text-foreground py-3 pr-4">
+                        Action Matrix
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -471,38 +473,38 @@ export default function Dashboard() {
                         key={incident.id}
                         className="hover:bg-muted/20 transition-colors"
                       >
-                        <TableCell className="font-medium whitespace-nowrap py-3.5 pl-4">
+                        <TableCell className="font-semibold text-xs whitespace-nowrap py-3 pl-4">
                           {incident.dateOfIncident}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap py-3.5">
+                        <TableCell className="text-xs font-medium whitespace-nowrap py-3">
                           {incident.reporterName}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap capitalize py-3.5">
+                        <TableCell className="text-xs font-semibold uppercase py-3">
                           {incident.incidentWardDept}
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate py-3.5">
+                        <TableCell className="max-w-[200px] text-xs font-medium truncate py-3">
                           {incident.causeGroup}
                         </TableCell>
-                        <TableCell className="py-3.5">
+                        <TableCell className="py-3">
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${getSeverityBadgeClass(incident.severityLevel)}`}
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getSeverityBadgeClass(incident.severityLevel)}`}
                           >
                             {incident.severityLevel}
                           </span>
                         </TableCell>
-                        <TableCell className="py-3.5">
+                        <TableCell className="py-3">
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${getStatusBadgeClass(incident.incidentStatus)}`}
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getStatusBadgeClass(incident.incidentStatus)}`}
                           >
                             {formatStatusText(incident.incidentStatus)}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right py-3.5 pr-4">
+                        <TableCell className="text-right py-3 pr-4">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => setSelectedIncident(incident)}
-                            className="font-medium h-8 px-3"
+                            className="font-bold text-xs uppercase h-7 px-3"
                           >
                             Details
                           </Button>
@@ -514,32 +516,32 @@ export default function Dashboard() {
               </div>
 
               {pagination && pagination.total_pages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 px-1">
-                  <div className="text-xs text-muted-foreground font-medium">
-                    Showing total {pagination.total_items} records across
-                    clinical sectors
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 px-1">
+                  <div className="text-[11px] font-bold uppercase text-muted-foreground">
+                    Total: {pagination.total_items} institutional safety records
+                    compiled
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handlePageChange(currentPage - 1)}
+                      onClick={() => setCurrentPage(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="h-8 w-8 border-muted"
+                      className="h-7 w-7"
                     >
-                      <ChevronLeft className="h-4 w-4" />
+                      <ChevronLeft className="h-3.5 w-3.5" />
                     </Button>
-                    <span className="text-xs font-semibold px-3 text-foreground">
+                    <span className="text-xs font-bold px-2">
                       Page {pagination.current_page} of {pagination.total_pages}
                     </span>
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handlePageChange(currentPage + 1)}
+                      onClick={() => setCurrentPage(currentPage + 1)}
                       disabled={currentPage === pagination.total_pages}
-                      className="h-8 w-8 border-muted"
+                      className="h-7 w-7"
                     >
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
@@ -553,612 +555,485 @@ export default function Dashboard() {
         open={!!selectedIncident}
         onOpenChange={(open) => !open && setSelectedIncident(null)}
       >
-        <DialogContent className="!max-w-7xl !w-[94vw] max-h-[92vh] overflow-y-auto p-6 md:p-8 rounded-xl border shadow-2xl bg-background">
+        <DialogContent className="!max-w-7xl !w-[95vw] max-h-[92vh] overflow-y-auto p-6 md:p-8 rounded-xl border shadow-2xl bg-background">
           {selectedIncident && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
               <DialogHeader className="border-b pb-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <DialogTitle className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                      Incident Dossier File Record #{selectedIncident.id}
+                    <DialogTitle className="text-xl font-black uppercase tracking-tight text-foreground flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-emerald-600" />
+                      Hospital Incident dossier file ##{selectedIncident.id}
                     </DialogTitle>
-                    <DialogDescription className="text-sm text-muted-foreground mt-1">
-                      Full administrative context mapping, statement
-                      documentation and risk assessment parameters.
+                    <DialogDescription className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">
+                      Comprehensive clinical statements, site diagnostics, and
+                      administrative report alignment matrix.
                     </DialogDescription>
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-3 shrink-0 bg-muted/40 p-2 rounded-lg border border-muted">
+                  <div className="flex flex-wrap items-center gap-3 shrink-0 bg-muted/50 p-2 rounded-lg border text-xs">
                     <div className="flex items-center gap-2">
                       <label
                         htmlFor="status-select"
-                        className="text-xs font-bold text-muted-foreground uppercase tracking-wider"
+                        className="text-[10px] font-black uppercase tracking-wider text-muted-foreground"
                       >
-                        Manage Status:
+                        MANAGE REGISTRY STATUS:
                       </label>
-                      <div className="relative flex items-center">
-                        <select
-                          id="status-select"
-                          value={selectedIncident.incidentStatus}
-                          disabled={updatingStatus}
-                          onChange={(e) =>
-                            handleStatusChange(e.target.value as IncidentStatus)
-                          }
-                          className={`text-xs font-semibold uppercase tracking-wider px-3 py-1.5 pr-8 rounded-md border appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-all ${getStatusBadgeClass(selectedIncident.incidentStatus)}`}
-                        >
-                          {VALID_STATUSES.map((statusItem) => (
-                            <option
-                              key={statusItem.value}
-                              value={statusItem.value}
-                              className="bg-background text-foreground uppercase tracking-normal font-normal"
-                            >
-                              {statusItem.label}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="absolute right-2.5 pointer-events-none text-muted-foreground">
-                          {updatingStatus ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                          ) : (
-                            <RefreshCw className="h-3 w-3" />
-                          )}
-                        </div>
-                      </div>
+                      <select
+                        id="status-select"
+                        value={selectedIncident.incidentStatus}
+                        disabled={updatingStatus}
+                        onChange={(e) =>
+                          handleStatusChange(e.target.value as IncidentStatus)
+                        }
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border focus:outline-none focus:ring-1 cursor-pointer disabled:opacity-50 ${getStatusBadgeClass(selectedIncident.incidentStatus)}`}
+                      >
+                        {VALID_STATUSES.map((st) => (
+                          <option
+                            key={st.value}
+                            value={st.value}
+                            className="bg-background text-foreground font-medium uppercase tracking-normal"
+                          >
+                            {st.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="h-4 w-px bg-muted hidden sm:block" />
                     <span
-                      className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wider ${getSeverityBadgeClass(selectedIncident.severityLevel)}`}
+                      className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${getSeverityBadgeClass(selectedIncident.severityLevel)}`}
                     >
-                      {selectedIncident.severityLevel} Severity
+                      {selectedIncident.severityLevel} Level
                     </span>
                   </div>
                 </div>
               </DialogHeader>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                {/* 1. ADMINISTRATIVE METRICS */}
-                <div className="lg:col-span-1 space-y-4">
-                  <div className="bg-muted/30 p-5 rounded-xl border border-muted/70 shadow-sm space-y-5">
-                    <div>
-                      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b pb-2 mb-3 flex items-center gap-1.5">
-                        <User className="h-3.5 w-3.5" /> Reporter Profile
-                      </h3>
-                      <div className="space-y-3.5">
-                        <div className="flex items-start gap-2.5 text-sm">
-                          <div className="p-1 rounded bg-background border mt-0.5 shrink-0">
-                            <User className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <span className="block font-semibold text-xs text-muted-foreground uppercase tracking-wider">
-                              Reporter Name
-                            </span>
-                            <span className="font-medium text-foreground">
-                              {selectedIncident.reporterName}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5 text-sm">
-                          <div className="p-1 rounded bg-background border mt-0.5 shrink-0">
-                            <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <span className="block font-semibold text-xs text-muted-foreground uppercase tracking-wider">
-                              Designation / Position
-                            </span>
-                            <span className="capitalize font-medium text-foreground">
-                              {selectedIncident.reporterDesignation}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5 text-sm">
-                          <div className="p-1 rounded bg-background border mt-0.5 shrink-0">
-                            <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <span className="block font-semibold text-xs text-muted-foreground uppercase tracking-wider">
-                              Contact Parameters
-                            </span>
-                            <span className="font-medium text-foreground/80 break-all">
-                              {selectedIncident.reporterInfo}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                {/* COLUMN 1: REPORTER & GENERAL METRICS */}
+                <div className="lg:col-span-1 bg-muted/20 p-5 rounded-xl border space-y-5">
+                  <div>
+                    <h3 className="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-wider border-b pb-2 mb-3 flex items-center gap-1">
+                      <User className="h-3.5 w-3.5" /> SECTION G: DETAILS OF
+                      PERSON REPORTING THE INCIDENT
+                    </h3>
+                    <div className="space-y-3 text-xs">
+                      <p>
+                        <strong>Reporter Name:</strong>{" "}
+                        {selectedIncident.reporterName}
+                      </p>
+                      <p className="capitalize">
+                        <strong>Designation:</strong>{" "}
+                        {selectedIncident.reporterDesignation}
+                      </p>
+                      <p className="break-all">
+                        <strong>Tel No / Contact Details:</strong>{" "}
+                        {selectedIncident.reporterInfo}
+                      </p>
+                      <p>
+                        <strong>Date Filed:</strong> {selectedIncident.date}
+                      </p>
+                      <p className="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+                        <ShieldCheck className="h-3.5 w-3.5" /> Signature
+                        Acknowledged / Validated
+                      </p>
                     </div>
+                  </div>
 
-                    <div className="pt-2">
-                      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b pb-2 mb-3 flex items-center gap-1.5">
-                        <Activity className="h-3.5 w-3.5" /> Event Metrics
-                      </h3>
-                      <div className="space-y-3.5">
-                        <div className="flex items-start gap-2.5 text-sm">
-                          <div className="p-1 rounded bg-background border mt-0.5 shrink-0">
-                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <span className="block font-semibold text-xs text-muted-foreground uppercase tracking-wider">
-                              Date of Incident
-                            </span>
-                            <span className="font-medium text-foreground">
-                              {selectedIncident.dateOfIncident}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5 text-sm">
-                          <div className="p-1 rounded bg-background border mt-0.5 shrink-0">
-                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <span className="block font-semibold text-xs text-muted-foreground uppercase tracking-wider">
-                              Time Stamp
-                            </span>
-                            <span className="font-medium text-foreground">
-                              {selectedIncident.timeOfIncident || "Unspecified"}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5 text-sm">
-                          <div className="p-1 rounded bg-background border mt-0.5 shrink-0">
-                            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <span className="block font-semibold text-xs text-muted-foreground uppercase tracking-wider">
-                              Location Zone & Dept
-                            </span>
-                            <span className="font-medium text-foreground">
-                              {selectedIncident.locationOfIncident} (
-                              {selectedIncident.incidentWardDept})
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                  <div>
+                    <h3 className="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-wider border-b pb-2 mb-3 flex items-center gap-1">
+                      <Activity className="h-3.5 w-3.5" /> SECTION C: WHEN AND
+                      WHERE DID THE INCIDENT OCCUR?
+                    </h3>
+                    <div className="space-y-3 text-xs">
+                      <p className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                        <strong>Date:</strong> {selectedIncident.dateOfIncident}
+                      </p>
+                      <p className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                        <strong>Time (am/pm):</strong>{" "}
+                        {selectedIncident.timeOfIncident || "Unspecified"}
+                      </p>
+                      <p className="flex items-start gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                        <span>
+                          <strong>Exact Location:</strong>{" "}
+                          {selectedIncident.locationOfIncident} <br />
+                          <span className="text-[10px] font-bold text-muted-foreground">
+                            WARD/DEPT: {selectedIncident.incidentWardDept}
+                          </span>
+                        </span>
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* 2. CLINICAL & CASE CONTEXT DATA */}
-                <div className="lg:col-span-2 bg-muted/20 p-5 rounded-xl border border-muted/60 shadow-sm space-y-5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Cause Group
-                      </h4>
-                      <p className="text-sm font-semibold text-foreground bg-background p-3 rounded-lg border shadow-sm capitalize">
-                        {selectedIncident.causeGroup}
+                {/* COLUMN 2 & 3: FORM CORE VARIABLES */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* SECTION A & B */}
+                  <div className="bg-background border p-5 rounded-xl shadow-sm space-y-4">
+                    <h3 className="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-wider border-b pb-1">
+                      SECTION A: PRINCIPAL PERSON INVOLVED (Who it happened to)
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <p>
+                        <strong>Name:</strong> {selectedIncident.principalName}
+                      </p>
+                      <p>
+                        <strong>Gender:</strong>{" "}
+                        {selectedIncident.principalGender}
+                      </p>
+                      <p>
+                        <strong>Date of Birth:</strong>{" "}
+                        {selectedIncident.principalDob}
+                      </p>
+                      <p className="capitalize">
+                        <strong>Classification Profile:</strong>{" "}
+                        {selectedIncident.principalType}
                       </p>
                     </div>
-                    <div className="space-y-1.5">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Principal Person Involved
-                      </h4>
-                      <div className="text-sm text-foreground bg-background p-3 rounded-lg border shadow-sm">
-                        <span className="font-medium">
-                          {selectedIncident.principalName}
-                        </span>{" "}
-                        <span className="text-xs text-muted-foreground block mt-0.5">
-                          Type: {selectedIncident.principalType} | Gender:{" "}
-                          {selectedIncident.principalGender} | DOB:{" "}
-                          {selectedIncident.principalDob}
-                        </span>
+
+                    {selectedIncident.principalType === "patient" && (
+                      <div className="p-3 bg-muted/40 rounded border text-xs grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <p>
+                          <strong>Patient Identification No:</strong>{" "}
+                          {selectedIncident.patientId}
+                        </p>
+                        <p>
+                          <strong>Ward/Dept/Other:</strong>{" "}
+                          {selectedIncident.patientWardDept || "N/A"}
+                        </p>
+                        <p>
+                          <strong>Tel No:</strong>{" "}
+                          {selectedIncident.staffPhone || "N/A"}
+                        </p>
                       </div>
-                    </div>
+                    )}
+
+                    {selectedIncident.principalType === "staff" && (
+                      <div className="p-3 bg-muted/40 rounded border text-xs grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <p>
+                          <strong>Job Title:</strong>{" "}
+                          {selectedIncident.staffJobTitle}
+                        </p>
+                        <p>
+                          <strong>Tel No:</strong>{" "}
+                          {selectedIncident.staffPhone || "N/A"}
+                        </p>
+                        <p>
+                          <strong>Place of work:</strong>{" "}
+                          {selectedIncident.staffPlaceOfWork}
+                        </p>
+                        <p>
+                          <strong>Site:</strong> {selectedIncident.staffSite}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedIncident.peopleInvolved && (
+                      <div className="pt-2 border-t space-y-1">
+                        <h4 className="text-[10px] font-black uppercase text-muted-foreground">
+                          SECTION B: OTHERS DIRECTLY INVOLVED IN THE INCIDENT
+                        </h4>
+                        <p className="text-xs bg-muted/30 p-2.5 rounded border whitespace-pre-wrap">
+                          {selectedIncident.peopleInvolved}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
-                  {(selectedIncident.patientId ||
-                    selectedIncident.staffJobTitle) && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-background/60 p-4 rounded-lg border text-sm">
-                      {selectedIncident.patientId && (
-                        <div className="space-y-1">
-                          <span className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                            Patient Registry Data
-                          </span>
-                          <p className="text-xs text-foreground">
-                            <strong>Patient ID:</strong>{" "}
-                            {selectedIncident.patientId}
-                          </p>
-                          <p className="text-xs text-foreground">
-                            <strong>Ward/Dept:</strong>{" "}
-                            {selectedIncident.patientWardDept || "N/A"}
-                          </p>
-                        </div>
-                      )}
-                      {selectedIncident.staffJobTitle && (
-                        <div className="space-y-1">
-                          <span className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                            Staff Member Core Data
-                          </span>
-                          <p className="text-xs text-foreground">
-                            <strong>Job Title:</strong>{" "}
-                            {selectedIncident.staffJobTitle}
-                          </p>
-                          <p className="text-xs text-foreground">
-                            <strong>Workplace/Site:</strong>{" "}
-                            {selectedIncident.staffPlaceOfWork} (
-                            {selectedIncident.staffSite})
-                          </p>
-                          <p className="text-xs text-foreground">
-                            <strong>Phone:</strong>{" "}
-                            {selectedIncident.staffPhone || "N/A"}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Personnel & Witnesses Account
-                      </h4>
-                      <div className="text-xs text-foreground bg-background p-4 rounded-lg border shadow-sm space-y-3 whitespace-pre-wrap leading-relaxed break-words">
-                        <div>
-                          <span className="block font-bold text-[10px] uppercase text-muted-foreground mb-1">
-                            People Involved:
-                          </span>
-                          <p>{selectedIncident.peopleInvolved}</p>
-                        </div>
-                        {selectedIncident.witnesses && (
-                          <div className="pt-2 border-t border-muted">
-                            <span className="block font-bold text-[10px] uppercase text-muted-foreground mb-1">
-                              Witness Statements ({selectedIncident.witnessType}
-                              ):
-                            </span>
-                            <p className="font-medium">
-                              {selectedIncident.witnesses}
-                            </p>
-                            <p className="text-muted-foreground text-[11px] mt-1">
-                              Dept: {selectedIncident.witnessWardDept} | Title:{" "}
-                              {selectedIncident.witnessJobTitle} | Contact:{" "}
-                              {selectedIncident.witenssPhone}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Factual Description of Causes
-                      </h4>
-                      <div className="text-xs text-foreground bg-background p-4 rounded-lg border shadow-sm whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere]">
+                  {/* SECTION D, E, F */}
+                  <div className="bg-background border p-5 rounded-xl shadow-sm space-y-4">
+                    <div>
+                      <h3 className="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-wider border-b pb-1 mb-2">
+                        SECTION D: FACTUAL DESCRIPTION OF THE INCIDENT & CAUSE
+                        MATRIX
+                      </h3>
+                      <p className="text-xs mb-2">
+                        <strong>Cause Group Category:</strong>{" "}
+                        <span className="font-bold underline">
+                          {selectedIncident.causeGroup}
+                        </span>
+                      </p>
+                      <div className="text-xs bg-muted/40 p-3 rounded border whitespace-pre-wrap leading-relaxed">
+                        <strong>Factual Description / Causes:</strong> <br />
                         {selectedIncident.causes}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Treatment Received Measures
-                      </h4>
-                      <div className="text-xs text-foreground bg-background p-4 rounded-lg border shadow-sm whitespace-pre-wrap leading-relaxed break-words">
-                        <p>{selectedIncident.treatmentReceived}</p>
-                        {selectedIncident.prescribingDoctor && (
-                          <p className="text-[11px] text-muted-foreground font-medium mt-2 pt-2 border-t">
-                            Prescribing Medical Officer:{" "}
-                            {selectedIncident.prescribingDoctor}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      <div className="space-y-1.5">
+                        <h4 className="text-[10px] font-black uppercase text-muted-foreground">
+                          SECTION E: DETAILS OF TREATMENT RECEIVED / MEDICATION
+                          ERROR
+                        </h4>
+                        <div className="text-xs bg-muted/40 p-3 rounded border min-h-[90px]">
+                          <p>
+                            <strong>Treatment Received / Action Taken:</strong>{" "}
+                            {selectedIncident.treatmentReceived}
                           </p>
-                        )}
+                          {selectedIncident.prescribingDoctor && (
+                            <p className="text-[10px] font-bold text-muted-foreground mt-2 border-t pt-1">
+                              Name of Doctor informed:{" "}
+                              {selectedIncident.prescribingDoctor}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Equipment / Medical Device Allocation
-                      </h4>
-                      <div className="text-xs text-foreground bg-background p-4 rounded-lg border shadow-sm space-y-1.5">
-                        <p>
-                          <strong>Involved:</strong>{" "}
-                          {selectedIncident.equipmentInvolved}
-                        </p>
-                        {selectedIncident.isMedicalDevice && (
-                          <p>
-                            <strong>Device Status:</strong> Classed as medical
-                            device ({selectedIncident.isMedicalDevice})
-                          </p>
-                        )}
-                        {selectedIncident.equipmentModel && (
-                          <p>
-                            <strong>Model Layout:</strong>{" "}
-                            {selectedIncident.equipmentModel}
-                          </p>
-                        )}
-                        {selectedIncident.equipmentNumber && (
-                          <p>
-                            <strong>Asset Number:</strong>{" "}
-                            {selectedIncident.equipmentNumber}
-                          </p>
-                        )}
 
-                        <div className="flex flex-wrap gap-1.5 pt-2">
-                          {selectedIncident.equipmentSentForRepair && (
-                            <span className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border">
-                              Sent For Repair
-                            </span>
-                          )}
-                          {selectedIncident.equipmentWithdrawn && (
-                            <span className="bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border">
-                              Withdrawn
-                            </span>
-                          )}
-                          {selectedIncident.equipmentRetained && (
-                            <span className="bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border">
-                              Retained
-                            </span>
+                      <div className="space-y-1.5">
+                        <h4 className="text-[10px] font-black uppercase text-muted-foreground">
+                          SECTION F: DETAILS OF EQUIPMENT / MEDICAL DEVICE
+                          INVOLVED
+                        </h4>
+                        <div className="text-xs bg-muted/40 p-3 rounded border min-h-[90px] space-y-1">
+                          <p>
+                            <strong>Equipment Involved:</strong>{" "}
+                            {selectedIncident.equipmentInvolved ||
+                              "None Reported"}
+                          </p>
+                          {selectedIncident.equipmentInvolved && (
+                            <>
+                              <p>
+                                <strong>Model:</strong>{" "}
+                                {selectedIncident.equipmentModel || "N/A"}
+                              </p>
+                              <p>
+                                <strong>Serial No / Asset No:</strong>{" "}
+                                {selectedIncident.equipmentNumber || "N/A"}
+                              </p>
+                              <p>
+                                <strong>Is it a Medical Device?:</strong>{" "}
+                                {selectedIncident.isMedicalDevice || "NO"}
+                              </p>
+                              <div className="text-[10px] font-bold text-emerald-800 flex flex-wrap gap-x-2 pt-1">
+                                {selectedIncident.equipmentSentForRepair && (
+                                  <span>&bull; Sent for Repair [YES]</span>
+                                )}
+                                {selectedIncident.equipmentWithdrawn && (
+                                  <span>
+                                    &bull; Withdrawn from Service [YES]
+                                  </span>
+                                )}
+                                {selectedIncident.equipmentRetained && (
+                                  <span>&bull; Retained [YES]</span>
+                                )}
+                              </div>
+                            </>
                           )}
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* 3. COMPLIANCE AND VALIDATION SYSTEM */}
-                <div className="lg:col-span-3 bg-primary/5 p-5 rounded-xl border border-primary/20 shadow-sm space-y-3">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                    <ShieldCheck className="h-3.5 w-3.5 text-primary" />{" "}
-                    Reporter Administrative Validation & Safety Assessment
-                  </h4>
-                  <div className="text-xs text-card-foreground bg-background p-4 rounded-lg border border-muted/60 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-muted-foreground">
-                        <strong>Form Signature Status:</strong>
-                      </p>
-                      <p className="font-semibold text-sm mt-0.5">
-                        {selectedIncident.signature
-                          ? "Verified Electronically Signed"
-                          : "No Signature Record"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">
-                        <strong>Submission System Date:</strong>
-                      </p>
-                      <p className="font-semibold text-sm mt-0.5">
-                        {selectedIncident.date}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">
-                        <strong>Risk Parameter Category:</strong>
-                      </p>
-                      <p className="font-semibold text-sm mt-0.5">
-                        {selectedIncident.isNearMiss
-                          ? "Classified Near Miss Event"
-                          : "Standard Incident Impact Record"}
-                      </p>
-                    </div>
+              {/* ADMINISTRATIVE REVIEW SEGMENT (SECTIONS H & J) */}
+              <div className="border-t pt-6">
+                <h2 className="text-sm font-black uppercase tracking-wider mb-4 flex items-center gap-1 text-emerald-800 dark:text-emerald-400">
+                  <ShieldCheck className="h-4 w-4" /> Administrative Action
+                  Panel (Sections H & J Evaluation)
+                </h2>
+
+                {loadingManagement ? (
+                  <div className="text-center py-6 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-center gap-2">
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Querying
+                    dossier details...
                   </div>
-                </div>
-
-                {/* DYNAMIC PIPELINE: MANAGEMENT REPORT REGISTRY */}
-                <div className="lg:col-span-3 border-t pt-6 mt-2 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
-                      <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
-                      Management Evaluation Report
-                    </h3>
-                  </div>
-
-                  {loadingManagement ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground p-4 bg-muted/20 border rounded-lg">
-                      <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
-                      Analyzing management log records...
-                    </div>
-                  ) : managementReport ? (
-                    /* VIEW MODE */
-                    <div className="bg-emerald-50/20 dark:bg-emerald-950/10 p-6 rounded-xl border border-emerald-500/20 shadow-inner grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="md:col-span-2 space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <span className="text-[11px] font-bold uppercase text-muted-foreground block">
-                              Impact on Service/Individual
-                            </span>
-                            <p className="text-sm p-3 bg-background border rounded-lg shadow-sm">
-                              {managementReport.impactOnService}
-                            </p>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-[11px] font-bold uppercase text-muted-foreground block">
-                              Contributory Factors
-                            </span>
-                            <p className="text-sm p-3 bg-background border rounded-lg shadow-sm">
-                              {managementReport.contributoryFactors}
-                            </p>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-[11px] font-bold uppercase text-muted-foreground block">
-                              Actions Taken & Outcomes
-                            </span>
-                            <p className="text-sm p-3 bg-background border rounded-lg shadow-sm">
-                              {managementReport.actionsTakenOutcomes}
-                            </p>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-[11px] font-bold uppercase text-muted-foreground block">
-                              Recommendations
-                            </span>
-                            <p className="text-sm p-3 bg-background border rounded-lg shadow-sm">
-                              {managementReport.recommendations}
-                            </p>
-                          </div>
+                ) : managementReport ? (
+                  /* VIEW LOGGED MANAGEMENT LOG ENTRY */
+                  <div className="bg-emerald-50/20 p-5 rounded-xl border border-emerald-200 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-2 space-y-4">
+                      <h3 className="text-xs font-black uppercase text-emerald-900 border-b pb-1">
+                        SECTION H: MANAGEMENT REPORT
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <strong>
+                            What was the impact on the individual/service?:
+                          </strong>
+                          <p className="bg-background p-2.5 rounded border mt-1">
+                            {managementReport.impactOnService}
+                          </p>
                         </div>
-                        <div className="space-y-1">
-                          <span className="text-[11px] font-bold uppercase text-muted-foreground block">
-                            Lessons Learned
-                          </span>
-                          <p className="text-sm p-3 bg-background border rounded-lg shadow-sm whitespace-pre-wrap">
+                        <div>
+                          <strong>CONTRIBUTORY FACTORS:</strong>
+                          <p className="bg-background p-2.5 rounded border mt-1">
+                            {managementReport.contributoryFactors}
+                          </p>
+                        </div>
+                        <div>
+                          <strong>ACTION TAKEN AND OUTCOMES:</strong>
+                          <p className="bg-background p-2.5 rounded border mt-1">
+                            {managementReport.actionsTakenOutcomes}
+                          </p>
+                        </div>
+                        <div>
+                          <strong>RECOMMENDATIONS:</strong>
+                          <p className="bg-background p-2.5 rounded border mt-1">
+                            {managementReport.recommendations}
+                          </p>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <strong>LESSONS LEARNED:</strong>
+                          <p className="bg-background p-2.5 rounded border mt-1">
                             {managementReport.lessonsLearned}
                           </p>
                         </div>
+                      </div>
 
-                        <div className="space-y-1.5 pt-2">
-                          <span className="text-[11px] font-bold uppercase text-muted-foreground block">
-                            Stakeholder Notifications Tracking
-                          </span>
-                          <div className="flex flex-wrap gap-2">
-                            <span
-                              className={`px-2.5 py-1 rounded text-xs border font-medium ${managementReport.informedPatient ? "bg-emerald-100/70 text-emerald-800" : "bg-muted text-muted-foreground"}`}
-                            >
-                              Patient Informed:{" "}
-                              {managementReport.informedPatient ? "Yes" : "No"}
+                      <div className="text-xs pt-1">
+                        <strong>Who was informed?:</strong>
+                        <div className="flex flex-wrap gap-3 mt-1.5 font-bold text-foreground">
+                          {managementReport.informedPatient && (
+                            <span className="bg-background px-2 py-0.5 border rounded">
+                              &bull; Patient
                             </span>
-                            <span
-                              className={`px-2.5 py-1 rounded text-xs border font-medium ${managementReport.informedRelative ? "bg-emerald-100/70 text-emerald-800" : "bg-muted text-muted-foreground"}`}
-                            >
-                              Relative Informed:{" "}
-                              {managementReport.informedRelative ? "Yes" : "No"}
+                          )}
+                          {managementReport.informedRelative && (
+                            <span className="bg-background px-2 py-0.5 border rounded">
+                              &bull; Relative
                             </span>
-                            <span
-                              className={`px-2.5 py-1 rounded text-xs border font-medium ${managementReport.informedSeniorManager ? "bg-emerald-100/70 text-emerald-800" : "bg-muted text-muted-foreground"}`}
-                            >
-                              Senior Manager Informed:{" "}
-                              {managementReport.informedSeniorManager
-                                ? "Yes"
-                                : "No"}
+                          )}
+                          {managementReport.informedSeniorManager && (
+                            <span className="bg-background px-2 py-0.5 border rounded">
+                              &bull; Senior Manager
                             </span>
-                            <span
-                              className={`px-2.5 py-1 rounded text-xs border font-medium ${managementReport.informedPharmacist ? "bg-emerald-100/70 text-emerald-800" : "bg-muted text-muted-foreground"}`}
-                            >
-                              Pharmacist Informed:{" "}
-                              {managementReport.informedPharmacist
-                                ? "Yes"
-                                : "No"}
+                          )}
+                          {managementReport.informedPharmacist && (
+                            <span className="bg-background px-2 py-0.5 border rounded">
+                              &bull; Pharmacist
                             </span>
-                          </div>
-                          {(managementReport.policeIncidentNumber ||
-                            managementReport.informedOther) && (
-                            <div className="text-xs text-muted-foreground bg-background p-2 border rounded mt-2 space-y-1">
-                              {managementReport.policeIncidentNumber && (
-                                <p>
-                                  <strong>Police Incident Number:</strong>{" "}
-                                  {managementReport.policeIncidentNumber}
-                                </p>
-                              )}
-                              {managementReport.informedOther && (
-                                <p>
-                                  <strong>Other Notified Contexts:</strong>{" "}
-                                  {managementReport.informedOther}
-                                </p>
-                              )}
-                            </div>
+                          )}
+                          {managementReport.policeIncidentNumber && (
+                            <span className="bg-background px-2 py-0.5 border rounded">
+                              &bull; Police (ID:{" "}
+                              {managementReport.policeIncidentNumber})
+                            </span>
+                          )}
+                          {managementReport.informedOther && (
+                            <span className="bg-background px-2 py-0.5 border rounded">
+                              &bull; Other: {managementReport.informedOther}
+                            </span>
                           )}
                         </div>
                       </div>
+                    </div>
 
-                      <div className="md:col-span-1 space-y-4 border-l md:pl-6 border-dashed border-emerald-500/20">
-                        <div className="bg-background p-4 border rounded-xl shadow-sm space-y-2">
-                          <span className="text-[11px] font-bold uppercase text-muted-foreground block flex items-center gap-1">
-                            <AlertTriangle className="h-3 w-3 text-amber-500" />{" "}
-                            Risk Matrix Analysis
-                          </span>
-                          <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                            <div className="p-2 bg-muted rounded border">
-                              <span className="text-[10px] block font-medium text-muted-foreground">
-                                Severity
-                              </span>
-                              <strong className="text-base text-foreground">
-                                {managementReport.riskSeverity}
-                              </strong>
-                            </div>
-                            <div className="p-2 bg-muted rounded border">
-                              <span className="text-[10px] block font-medium text-muted-foreground">
-                                Likelihood
-                              </span>
-                              <strong className="text-base text-foreground">
-                                {managementReport.riskLikelihood}
-                              </strong>
-                            </div>
-                            <div className="p-2 bg-emerald-600 text-white rounded border border-emerald-700">
-                              <span className="text-[10px] block font-medium text-emerald-200">
-                                Rating
-                              </span>
-                              <strong className="text-base">
-                                {managementReport.riskRating}
-                              </strong>
-                            </div>
-                          </div>
-                        </div>
+                    <div className="space-y-4 border-l pl-0 md:pl-6 border-emerald-200/60">
+                      <div className="bg-background p-3 rounded border text-xs space-y-1">
+                        <span className="text-[10px] font-black uppercase text-muted-foreground block">
+                          RISK ANALYSIS SUMMARY
+                        </span>
+                        <p>
+                          <strong>Severity:</strong>{" "}
+                          {managementReport.riskSeverity} &bull;{" "}
+                          <strong>Likelihood:</strong>{" "}
+                          {managementReport.riskLikelihood}
+                        </p>
+                        <p className="text-emerald-800 font-extrabold pt-1">
+                          Risk Rating Score: {managementReport.riskRating}
+                        </p>
+                      </div>
 
-                        <div className="bg-background p-4 border rounded-xl shadow-sm space-y-2">
-                          <span className="text-[11px] font-bold uppercase text-muted-foreground block">
-                            OHS Staff Evaluation
-                          </span>
-                          <div className="text-xs space-y-1.5">
-                            <p className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Absence &gt; 3 Days:
-                              </span>
-                              <span className="font-semibold">
-                                {managementReport.ohsAbsenceOver3Days
-                                  ? "YES"
-                                  : "NO"}
-                              </span>
-                            </p>
-                            <p className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Act of Violence/Danger:
-                              </span>
-                              <span className="font-semibold">
-                                {managementReport.ohsActOfViolenceOrDanger
-                                  ? "YES"
-                                  : "NO"}
-                              </span>
-                            </p>
-                            <p className="flex justify-between">
-                              <span className="text-muted-foreground">
-                                Hospitalisation &gt; 24 Hours:
-                              </span>
-                              <span className="font-semibold">
-                                {managementReport.ohsHospitalisationOver24Hours
-                                  ? "YES"
-                                  : "NO"}
-                              </span>
-                            </p>
-                            {managementReport.ohsStaffName && (
-                              <div className="pt-1.5 border-t mt-1.5 space-y-0.5 text-[11px] text-muted-foreground">
-                                <p>
-                                  <strong>Staff Impacted:</strong>{" "}
-                                  {managementReport.ohsStaffName} (
-                                  {managementReport.ohsStaffDob})
-                                </p>
-                                <p>
-                                  <strong>Home Address:</strong>{" "}
-                                  {managementReport.ohsStaffAddress}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                      <div className="bg-background p-3 rounded border text-xs space-y-1.5">
+                        <span className="text-[10px] font-black uppercase text-muted-foreground block">
+                          SECTION J: OHS STAFF INCIDENT EVALUATION
+                        </span>
+                        <p className="flex justify-between">
+                          <span>Absence Over 3 Days:</span>{" "}
+                          <strong>
+                            {managementReport.ohsAbsenceOver3Days
+                              ? "YES"
+                              : "NO"}
+                          </strong>
+                        </p>
+                        <p className="flex justify-between">
+                          <span>Act of Violence / Danger:</span>{" "}
+                          <strong>
+                            {managementReport.ohsActOfViolenceOrDanger
+                              ? "YES"
+                              : "NO"}
+                          </strong>
+                        </p>
+                        <p className="flex justify-between">
+                          <span>Hospitalisation &gt; 24h Likely:</span>{" "}
+                          <strong>
+                            {managementReport.ohsHospitalisationOver24Hours
+                              ? "YES"
+                              : "NO"}
+                          </strong>
+                        </p>
 
-                        <div className="bg-muted/40 p-4 border rounded-xl text-xs space-y-1.5">
-                          <p>
-                            <strong>Manager in Charge:</strong>{" "}
-                            {managementReport.managerName}
-                          </p>
-                          <p className="capitalize">
-                            <strong>Designation:</strong>{" "}
-                            {managementReport.managerDesignation}
-                          </p>
-                          <p>
-                            <strong>Execution Sign Date:</strong>{" "}
-                            {managementReport.managerDate}
-                          </p>
-                          <div className="pt-2 border-t flex items-center gap-1.5 text-emerald-700 font-semibold text-[11px]">
-                            <ShieldCheck className="h-4 w-4" /> Signature
-                            Attested Electronically
+                        {managementReport.ohsStaffName && (
+                          <div className="mt-2 pt-2 border-t text-[11px] text-muted-foreground space-y-0.5">
+                            <p>
+                              <strong>Staff Injured:</strong>{" "}
+                              {managementReport.ohsStaffName}
+                            </p>
+                            <p>
+                              <strong>DOB:</strong>{" "}
+                              {managementReport.ohsStaffDob}
+                            </p>
+                            <p>
+                              <strong>Home Address:</strong>{" "}
+                              {managementReport.ohsStaffAddress || "N/A"}
+                            </p>
                           </div>
-                        </div>
+                        )}
+                      </div>
+
+                      <div className="text-[11px] bg-emerald-800 text-white p-3 rounded border space-y-1">
+                        <p>
+                          <strong>Person in Charge (printed):</strong>{" "}
+                          {managementReport.managerName}
+                        </p>
+                        <p>
+                          <strong>Designation:</strong>{" "}
+                          {managementReport.managerDesignation}
+                        </p>
+                        <p>
+                          <strong>Date Signed:</strong>{" "}
+                          {managementReport.managerDate}
+                        </p>
+                        <p className="text-[10px] text-emerald-200 font-bold mt-1">
+                          &bull; Authorized Administrative Attestation Valid
+                        </p>
                       </div>
                     </div>
-                  ) : isAddingManagement ? (
-                    /* FORM CREATE MODE */
-                    <form
-                      onSubmit={handleManagementSubmit}
-                      className="bg-muted/30 p-6 rounded-xl border space-y-6"
+                  </div>
+                ) : !isAddingManagement ? (
+                  /* EMPTY STATE TRIGGER PANEL BUTTON */
+                  <div className="text-center py-8 border-2 border-dashed rounded-xl bg-muted/10 flex flex-col items-center justify-center p-4">
+                    <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">
+                      No administrative evaluation or action plan has been
+                      attached to this clinical event file yet.
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={() => setIsAddingManagement(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider gap-1.5 shadow-sm"
                     >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Plus className="h-3.5 w-3.5" /> Complete Management
+                      Report (Sections H & J)
+                    </Button>
+                  </div>
+                ) : (
+                  /* EDIT INTERACTIVE SUBMISSION FORM FOR SECTIONS H & J */
+                  <form
+                    onSubmit={handleManagementSubmit}
+                    className="bg-muted/40 p-5 rounded-xl border space-y-6"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* SECTION H FORM ENTRY FIELDS */}
+                      <div className="space-y-4">
+                        <h3 className="text-xs font-black uppercase text-emerald-800 border-b pb-1">
+                          SECTION H: MANAGEMENT REPORT INPUTS
+                        </h3>
+
                         <div className="space-y-1">
                           <label
-                            className="text-xs font-bold text-foreground uppercase"
+                            className="text-[11px] font-bold uppercase text-foreground"
                             htmlFor="impactOnService"
                           >
                             What was the impact on the individual/service? *
@@ -1173,15 +1048,16 @@ export default function Dashboard() {
                                 impactOnService: e.target.value,
                               })
                             }
-                            className="w-full text-sm bg-background border rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500/30 outline-none h-20 resize-none"
+                            className="w-full text-xs bg-background border rounded p-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none h-16"
                           />
                         </div>
+
                         <div className="space-y-1">
                           <label
-                            className="text-xs font-bold text-foreground uppercase"
+                            className="text-[11px] font-bold uppercase text-foreground"
                             htmlFor="contributoryFactors"
                           >
-                            Contributory Factors *
+                            CONTRIBUTORY FACTORS *
                           </label>
                           <textarea
                             id="contributoryFactors"
@@ -1193,15 +1069,16 @@ export default function Dashboard() {
                                 contributoryFactors: e.target.value,
                               })
                             }
-                            className="w-full text-sm bg-background border rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500/30 outline-none h-20 resize-none"
+                            className="w-full text-xs bg-background border rounded p-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none h-16"
                           />
                         </div>
+
                         <div className="space-y-1">
                           <label
-                            className="text-xs font-bold text-foreground uppercase"
+                            className="text-[11px] font-bold uppercase text-foreground"
                             htmlFor="actionsTakenOutcomes"
                           >
-                            Action Taken and Outcomes *
+                            ACTION TAKEN AND OUTCOMES *
                           </label>
                           <textarea
                             id="actionsTakenOutcomes"
@@ -1213,288 +1090,236 @@ export default function Dashboard() {
                                 actionsTakenOutcomes: e.target.value,
                               })
                             }
-                            className="w-full text-sm bg-background border rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500/30 outline-none h-20 resize-none"
+                            className="w-full text-xs bg-background border rounded p-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none h-16"
                           />
                         </div>
-                        <div className="space-y-1">
-                          <label
-                            className="text-xs font-bold text-foreground uppercase"
-                            htmlFor="recommendations"
-                          >
-                            Recommendations *
-                          </label>
-                          <textarea
-                            id="recommendations"
-                            required
-                            value={mgmtForm.recommendations}
-                            onChange={(e) =>
-                              setMgmtForm({
-                                ...mgmtForm,
-                                recommendations: e.target.value,
-                              })
-                            }
-                            className="w-full text-sm bg-background border rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500/30 outline-none h-20 resize-none"
-                          />
-                        </div>
-                      </div>
 
-                      <div className="space-y-1">
-                        <label
-                          className="text-xs font-bold text-foreground uppercase"
-                          htmlFor="lessonsLearned"
-                        >
-                          Lessons Learned *
-                        </label>
-                        <textarea
-                          id="lessonsLearned"
-                          required
-                          value={mgmtForm.lessonsLearned}
-                          onChange={(e) =>
-                            setMgmtForm({
-                              ...mgmtForm,
-                              lessonsLearned: e.target.value,
-                            })
-                          }
-                          className="w-full text-sm bg-background border rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500/30 outline-none h-20"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <span className="text-xs font-bold text-foreground uppercase block">
-                          Who was informed?
-                        </span>
-                        <div className="flex flex-wrap gap-4 bg-background p-3 rounded-lg border text-xs">
-                          <label className="flex items-center gap-1.5 font-medium cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={mgmtForm.informedPatient}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label
+                              className="text-[11px] font-bold uppercase text-foreground"
+                              htmlFor="recommendations"
+                            >
+                              RECOMMENDATIONS *
+                            </label>
+                            <textarea
+                              id="recommendations"
+                              required
+                              value={mgmtForm.recommendations}
                               onChange={(e) =>
                                 setMgmtForm({
                                   ...mgmtForm,
-                                  informedPatient: e.target.checked,
+                                  recommendations: e.target.value,
                                 })
                               }
-                              className="rounded border-muted text-emerald-600 focus:ring-emerald-500/40"
+                              className="w-full text-xs bg-background border rounded p-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none h-16"
                             />
-                            Patient
-                          </label>
-                          <label className="flex items-center gap-1.5 font-medium cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={mgmtForm.informedRelative}
+                          </div>
+                          <div className="space-y-1">
+                            <label
+                              className="text-[11px] font-bold uppercase text-foreground"
+                              htmlFor="lessonsLearned"
+                            >
+                              LESSONS LEARNED *
+                            </label>
+                            <textarea
+                              id="lessonsLearned"
+                              required
+                              value={mgmtForm.lessonsLearned}
                               onChange={(e) =>
                                 setMgmtForm({
                                   ...mgmtForm,
-                                  informedRelative: e.target.checked,
+                                  lessonsLearned: e.target.value,
                                 })
                               }
-                              className="rounded border-muted text-emerald-600 focus:ring-emerald-500/40"
+                              className="w-full text-xs bg-background border rounded p-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none h-16"
                             />
-                            Relative
-                          </label>
-                          <label className="flex items-center gap-1.5 font-medium cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={mgmtForm.informedSeniorManager}
-                              onChange={(e) =>
-                                setMgmtForm({
-                                  ...mgmtForm,
-                                  informedSeniorManager: e.target.checked,
-                                })
-                              }
-                              className="rounded border-muted text-emerald-600 focus:ring-emerald-500/40"
-                            />
-                            Senior Manager
-                          </label>
-                          <label className="flex items-center gap-1.5 font-medium cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={mgmtForm.informedPharmacist}
-                              onChange={(e) =>
-                                setMgmtForm({
-                                  ...mgmtForm,
-                                  informedPharmacist: e.target.checked,
-                                })
-                              }
-                              className="rounded border-muted text-emerald-600 focus:ring-emerald-500/40"
-                            />
-                            Pharmacist
-                          </label>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label
-                            className="text-xs font-bold text-foreground uppercase"
-                            htmlFor="policeIncidentNumber"
-                          >
-                            Police Incident Number (Optional)
-                          </label>
-                          <input
-                            type="text"
-                            id="policeIncidentNumber"
-                            value={mgmtForm.policeIncidentNumber}
-                            onChange={(e) =>
-                              setMgmtForm({
-                                ...mgmtForm,
-                                policeIncidentNumber: e.target.value,
-                              })
-                            }
-                            className="w-full text-sm bg-background border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500/30 outline-none"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label
-                            className="text-xs font-bold text-foreground uppercase"
-                            htmlFor="informedOther"
-                          >
-                            Other Persons Informed (Optional)
-                          </label>
-                          <input
-                            type="text"
-                            id="informedOther"
-                            value={mgmtForm.informedOther}
-                            onChange={(e) =>
-                              setMgmtForm({
-                                ...mgmtForm,
-                                informedOther: e.target.value,
-                              })
-                            }
-                            className="w-full text-sm bg-background border rounded-lg p-2 focus:ring-2 focus:ring-emerald-500/30 outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                        <div className="bg-background border p-4 rounded-xl space-y-3 shadow-sm">
-                          <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
-                            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />{" "}
-                            Risk Analysis
-                          </span>
-                          <div className="space-y-2 text-xs">
-                            <div>
-                              <label
-                                className="block text-muted-foreground mb-1 font-medium"
-                                htmlFor="riskSeverity"
-                              >
-                                Severity Level Grade (1-5)
-                              </label>
-                              <select
-                                id="riskSeverity"
-                                value={mgmtForm.riskSeverity}
-                                onChange={(e) =>
-                                  setMgmtForm({
-                                    ...mgmtForm,
-                                    riskSeverity: parseInt(e.target.value),
-                                  })
-                                }
-                                className="w-full bg-muted border p-1.5 rounded outline-none"
-                              >
-                                {[1, 2, 3, 4, 5].map((n) => (
-                                  <option key={n} value={n}>
-                                    {n}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label
-                                className="block text-muted-foreground mb-1 font-medium"
-                                htmlFor="riskLikelihood"
-                              >
-                                Likelihood Rating (1-5)
-                              </label>
-                              <select
-                                id="riskLikelihood"
-                                value={mgmtForm.riskLikelihood}
-                                onChange={(e) =>
-                                  setMgmtForm({
-                                    ...mgmtForm,
-                                    riskLikelihood: parseInt(e.target.value),
-                                  })
-                                }
-                                className="w-full bg-muted border p-1.5 rounded outline-none"
-                              >
-                                {[1, 2, 3, 4, 5].map((n) => (
-                                  <option key={n} value={n}>
-                                    {n}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/30 text-center rounded flex flex-col justify-center">
-                              <span className="text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-300">
-                                Calculated Risk Score
-                              </span>
-                              <span className="text-xl font-extrabold text-emerald-700 dark:text-emerald-400">
-                                {mgmtForm.riskRating}
-                              </span>
-                            </div>
                           </div>
                         </div>
 
-                        <div className="bg-background border p-4 rounded-xl space-y-3 shadow-sm md:col-span-2">
-                          <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider block">
-                            OHS Staff Incidents Evaluation Compliance
+                        <div className="space-y-1">
+                          <span className="text-[11px] font-bold uppercase text-foreground block">
+                            Who was informed?
                           </span>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs mb-3">
-                            <label className="flex items-center gap-1.5 bg-muted/50 p-2 border rounded cursor-pointer">
+                          <div className="flex flex-wrap gap-x-4 gap-y-2 bg-background p-2.5 rounded border text-[11px] font-medium">
+                            <label className="flex items-center gap-1 cursor-pointer">
                               <input
                                 type="checkbox"
-                                checked={mgmtForm.ohsAbsenceOver3Days}
+                                checked={mgmtForm.informedPatient}
                                 onChange={(e) =>
                                   setMgmtForm({
                                     ...mgmtForm,
-                                    ohsAbsenceOver3Days: e.target.checked,
+                                    informedPatient: e.target.checked,
                                   })
                                 }
                                 className="rounded text-emerald-600"
-                              />
-                              <span>Absence &gt; 3 Days likely?</span>
+                              />{" "}
+                              Patient
                             </label>
-                            <label className="flex items-center gap-1.5 bg-muted/50 p-2 border rounded cursor-pointer">
+                            <label className="flex items-center gap-1 cursor-pointer">
                               <input
                                 type="checkbox"
-                                checked={mgmtForm.ohsActOfViolenceOrDanger}
+                                checked={mgmtForm.informedRelative}
                                 onChange={(e) =>
                                   setMgmtForm({
                                     ...mgmtForm,
-                                    ohsActOfViolenceOrDanger: e.target.checked,
+                                    informedRelative: e.target.checked,
                                   })
                                 }
                                 className="rounded text-emerald-600"
-                              />
-                              <span>Act of violence/danger?</span>
+                              />{" "}
+                              Relative
                             </label>
-                            <label className="flex items-center gap-1.5 bg-muted/50 p-2 border rounded cursor-pointer">
+                            <label className="flex items-center gap-1 cursor-pointer">
                               <input
                                 type="checkbox"
-                                checked={mgmtForm.ohsHospitalisationOver24Hours}
+                                checked={mgmtForm.informedSeniorManager}
                                 onChange={(e) =>
                                   setMgmtForm({
                                     ...mgmtForm,
-                                    ohsHospitalisationOver24Hours:
-                                      e.target.checked,
+                                    informedSeniorManager: e.target.checked,
                                   })
                                 }
                                 className="rounded text-emerald-600"
-                              />
-                              <span>Hospitalisation &gt; 24h?</span>
+                              />{" "}
+                              Senior Manager
+                            </label>
+                            <label className="flex items-center gap-1 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={mgmtForm.informedPharmacist}
+                                onChange={(e) =>
+                                  setMgmtForm({
+                                    ...mgmtForm,
+                                    informedPharmacist: e.target.checked,
+                                  })
+                                }
+                                className="rounded text-emerald-600"
+                              />{" "}
+                              Pharmacist
                             </label>
                           </div>
+                        </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                            <div>
-                              <label
-                                className="block text-muted-foreground mb-0.5"
-                                htmlFor="ohsStaffName"
-                              >
-                                Injured Staff Name
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label
+                              className="text-[10px] font-bold uppercase text-muted-foreground"
+                              htmlFor="policeNum"
+                            >
+                              Police (incident number)
+                            </label>
+                            <input
+                              id="policeNum"
+                              type="text"
+                              value={mgmtForm.policeIncidentNumber}
+                              onChange={(e) =>
+                                setMgmtForm({
+                                  ...mgmtForm,
+                                  policeIncidentNumber: e.target.value,
+                                })
+                              }
+                              className="w-full text-xs bg-background border h-8 px-2 rounded focus:outline-none focus:ring-1"
+                              placeholder="Registry ID"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label
+                              className="text-[10px] font-bold uppercase text-muted-foreground"
+                              htmlFor="otherInformed"
+                            >
+                              Other
+                            </label>
+                            <input
+                              id="otherInformed"
+                              type="text"
+                              value={mgmtForm.informedOther}
+                              onChange={(e) =>
+                                setMgmtForm({
+                                  ...mgmtForm,
+                                  informedOther: e.target.value,
+                                })
+                              }
+                              className="w-full text-xs bg-background border h-8 px-2 rounded focus:outline-none focus:ring-1"
+                              placeholder="Specify parameters"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* SECTION J FORM ENTRY FIELDS */}
+                      <div className="space-y-4 border-l pl-0 md:pl-6 border-muted-foreground/20">
+                        <h3 className="text-xs font-black uppercase text-emerald-800 border-b pb-1">
+                          SECTION J: OHS COMPLIANCE QUESTIONS
+                        </h3>
+
+                        <div className="bg-background p-3 rounded border text-xs space-y-2.5">
+                          <label className="flex items-start gap-2 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={mgmtForm.ohsAbsenceOver3Days}
+                              onChange={(e) =>
+                                setMgmtForm({
+                                  ...mgmtForm,
+                                  ohsAbsenceOver3Days: e.target.checked,
+                                })
+                              }
+                              className="h-4 w-4 text-emerald-600 rounded mt-0.5"
+                            />
+                            <span>
+                              Is the staff’s injury, absence from work, or
+                              inability to perform normal duties likely to last
+                              for more than 3 days?
+                            </span>
+                          </label>
+                          <label className="flex items-start gap-2 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={mgmtForm.ohsActOfViolenceOrDanger}
+                              onChange={(e) =>
+                                setMgmtForm({
+                                  ...mgmtForm,
+                                  ohsActOfViolenceOrDanger: e.target.checked,
+                                })
+                              }
+                              className="h-4 w-4 text-emerald-600 rounded mt-0.5"
+                            />
+                            <span>
+                              Was this an act of violence or dangerous
+                              occurrence
+                            </span>
+                          </label>
+                          <label className="flex items-start gap-2 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={mgmtForm.ohsHospitalisationOver24Hours}
+                              onChange={(e) =>
+                                setMgmtForm({
+                                  ...mgmtForm,
+                                  ohsHospitalisationOver24Hours:
+                                    e.target.checked,
+                                })
+                              }
+                              className="h-4 w-4 text-emerald-600 rounded mt-0.5"
+                            />
+                            <span>
+                              Is hospitalisation for more than 24 hours likely?
+                            </span>
+                          </label>
+                        </div>
+
+                        <div className="space-y-2.5 p-3 bg-background border rounded">
+                          <span className="text-[10px] font-bold uppercase text-muted-foreground block">
+                            Staff Home Address Registry (Required for OHS
+                            completion)
+                          </span>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-foreground">
+                                Name of staff sustaining injury
                               </label>
                               <input
                                 type="text"
-                                id="ohsStaffName"
                                 value={mgmtForm.ohsStaffName}
                                 onChange={(e) =>
                                   setMgmtForm({
@@ -1502,19 +1327,15 @@ export default function Dashboard() {
                                     ohsStaffName: e.target.value,
                                   })
                                 }
-                                className="w-full bg-muted/50 border p-1 rounded"
+                                className="w-full bg-muted/40 border h-7 px-1.5 rounded text-xs"
                               />
                             </div>
-                            <div>
-                              <label
-                                className="block text-muted-foreground mb-0.5"
-                                htmlFor="ohsStaffDob"
-                              >
-                                Staff Date of Birth
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-foreground">
+                                Date of Birth
                               </label>
                               <input
-                                type="text"
-                                id="ohsStaffDob"
+                                type="date"
                                 value={mgmtForm.ohsStaffDob}
                                 onChange={(e) =>
                                   setMgmtForm({
@@ -1522,82 +1343,126 @@ export default function Dashboard() {
                                     ohsStaffDob: e.target.value,
                                   })
                                 }
-                                className="w-full bg-muted/50 border p-1 rounded"
-                                placeholder="DD/MM/YYYY"
-                              />
-                            </div>
-                            <div className="sm:col-span-2">
-                              <label
-                                className="block text-muted-foreground mb-0.5"
-                                htmlFor="ohsStaffAddress"
-                              >
-                                Staff Home Address (Required for OHS submission)
-                              </label>
-                              <input
-                                type="text"
-                                id="ohsStaffAddress"
-                                value={mgmtForm.ohsStaffAddress}
-                                onChange={(e) =>
-                                  setMgmtForm({
-                                    ...mgmtForm,
-                                    ohsStaffAddress: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-muted/50 border p-1 rounded"
+                                className="w-full bg-muted/40 border h-7 px-1.5 rounded text-xs"
                               />
                             </div>
                           </div>
+                          <div className="space-y-1 text-xs">
+                            <label className="text-[10px] font-bold text-foreground">
+                              Home Address
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Staff Residential Metrics"
+                              value={mgmtForm.ohsStaffAddress}
+                              onChange={(e) =>
+                                setMgmtForm({
+                                  ...mgmtForm,
+                                  ohsStaffAddress: e.target.value,
+                                })
+                              }
+                              className="w-full bg-background border h-8 px-2 rounded text-xs focus:outline-none"
+                            />
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="bg-background border p-4 rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs shadow-sm items-end">
-                        <div>
-                          <label
-                            className="block text-muted-foreground mb-1 font-bold uppercase"
-                            htmlFor="managerName"
-                          >
-                            Manager In Charge *
-                          </label>
-                          <input
-                            type="text"
-                            id="managerName"
-                            required
-                            value={mgmtForm.managerName}
-                            onChange={(e) =>
-                              setMgmtForm({
-                                ...mgmtForm,
-                                managerName: e.target.value,
-                              })
-                            }
-                            className="w-full bg-muted/30 border p-2 rounded-md"
-                          />
+                        <div className="bg-emerald-50 dark:bg-emerald-950/20 p-3 rounded border border-emerald-200/60 space-y-2 text-xs">
+                          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block uppercase">
+                            RISK MATRIX CALCULATOR GRADING
+                          </span>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] block">
+                                Severity Score (1-5)
+                              </label>
+                              <input
+                                type="number"
+                                min={1}
+                                max={5}
+                                value={mgmtForm.riskSeverity}
+                                onChange={(e) =>
+                                  setMgmtForm({
+                                    ...mgmtForm,
+                                    riskSeverity: parseInt(e.target.value) || 1,
+                                  })
+                                }
+                                className="w-full border rounded bg-background h-7 px-2"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] block">
+                                Likelihood Score (1-5)
+                              </label>
+                              <input
+                                type="number"
+                                min={1}
+                                max={5}
+                                value={mgmtForm.riskLikelihood}
+                                onChange={(e) =>
+                                  setMgmtForm({
+                                    ...mgmtForm,
+                                    riskLikelihood:
+                                      parseInt(e.target.value) || 1,
+                                  })
+                                }
+                                className="w-full border rounded bg-background h-7 px-2"
+                              />
+                            </div>
+                          </div>
+                          <p className="text-[11px] font-black uppercase text-emerald-800 pt-1">
+                            Automated Risk Rating Score: {mgmtForm.riskRating}
+                          </p>
                         </div>
-                        <div>
-                          <label
-                            className="block text-muted-foreground mb-1 font-bold uppercase"
-                            htmlFor="managerDesignation"
-                          >
-                            Manager Designation *
-                          </label>
-                          <input
-                            type="text"
-                            id="managerDesignation"
-                            required
-                            value={mgmtForm.managerDesignation}
-                            onChange={(e) =>
-                              setMgmtForm({
-                                ...mgmtForm,
-                                managerDesignation: e.target.value,
-                              })
-                            }
-                            className="w-full bg-muted/30 border p-2 rounded-md"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <label className="flex items-center gap-2 bg-emerald-50/50 p-2.5 border border-emerald-500/20 rounded-md font-bold text-emerald-800 uppercase tracking-wider cursor-pointer select-none">
+
+                        <div className="grid grid-cols-2 gap-3 text-xs bg-muted/20 p-3 rounded border">
+                          <div className="space-y-1">
+                            <label
+                              className="text-[10px] font-bold"
+                              htmlFor="mName"
+                            >
+                              Name of Person in Charge (printed) *
+                            </label>
+                            <input
+                              id="mName"
+                              type="text"
+                              required
+                              value={mgmtForm.managerName}
+                              onChange={(e) =>
+                                setMgmtForm({
+                                  ...mgmtForm,
+                                  managerName: e.target.value,
+                                })
+                              }
+                              className="w-full bg-background border h-8 px-2 rounded focus:outline-none"
+                              placeholder="BLOCK CAPITALS"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label
+                              className="text-[10px] font-bold"
+                              htmlFor="mDes"
+                            >
+                              Designation *
+                            </label>
+                            <input
+                              id="mDes"
+                              type="text"
+                              required
+                              value={mgmtForm.managerDesignation}
+                              onChange={(e) =>
+                                setMgmtForm({
+                                  ...mgmtForm,
+                                  managerDesignation: e.target.value,
+                                })
+                              }
+                              className="w-full bg-background border h-8 px-2 rounded focus:outline-none"
+                              placeholder="Unit Head / Supervisor"
+                            />
+                          </div>
+                          <div className="col-span-2 pt-1 flex items-center gap-1.5 select-none cursor-pointer">
                             <input
                               type="checkbox"
-                              required
+                              id="mSig"
                               checked={mgmtForm.managerSignature}
                               onChange={(e) =>
                                 setMgmtForm({
@@ -1605,60 +1470,52 @@ export default function Dashboard() {
                                   managerSignature: e.target.checked,
                                 })
                               }
-                              className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+                              className="rounded text-emerald-600"
+                              required
                             />
-                            Attest Manager Signature *
-                          </label>
+                            <label
+                              htmlFor="mSig"
+                              className="text-[11px] font-bold text-foreground"
+                            >
+                              Attest Signature (Acknowledge Signature
+                              Validation) *
+                            </label>
+                          </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="flex justify-end gap-3 pt-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setIsAddingManagement(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          size="sm"
-                          disabled={submittingManagement}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[120px]"
-                        >
-                          {submittingManagement ? (
-                            <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                          ) : (
-                            "Save Report Fields"
-                          )}
-                        </Button>
-                      </div>
-                    </form>
-                  ) : (
-                    /* EMPTY STATE MODE: Singular high-visibility button here */
-                    <div className="text-center py-8 border-2 border-dashed rounded-xl bg-muted/10 flex flex-col items-center justify-center p-4">
-                      <p className="text-sm text-muted-foreground mb-3 font-medium">
-                        No administrative evaluation or action plan has been
-                        attached to this clinical event file yet.
-                      </p>
+                    <div className="flex justify-end gap-3 pt-2 border-t">
                       <Button
+                        type="button"
+                        variant="ghost"
                         size="sm"
-                        onClick={() => setIsAddingManagement(true)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-sm"
+                        onClick={() => setIsAddingManagement(false)}
+                        className="h-8 text-xs font-bold uppercase border"
                       >
-                        <Plus className="h-4 w-4" /> Add Management Report
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={submittingManagement}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase h-8 px-4 shadow-sm"
+                      >
+                        {submittingManagement ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          "Save Report Fields"
+                        )}
                       </Button>
                     </div>
-                  )}
-                </div>
+                  </form>
+                )}
               </div>
 
               <div className="flex justify-end pt-4 border-t mt-4">
                 <Button
                   variant="outline"
                   onClick={() => setSelectedIncident(null)}
-                  className="px-6 font-medium h-10 shadow-sm"
+                  className="px-5 font-bold text-xs uppercase h-9 shadow-sm border-muted"
                 >
                   Close File Record
                 </Button>

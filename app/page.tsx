@@ -42,7 +42,7 @@ export default function LandingReportPage() {
   const [principalName, setPrincipalName] = useState("");
   const [principalGender, setPrincipalGender] = useState("");
   const [principalDob, setPrincipalDob] = useState("");
-  const [principalType, setPrincipalType] = useState(""); // patient, staff, visiting consultant, other
+  const [principalType, setPrincipalType] = useState("");
   const [patientId, setPatientId] = useState("");
   const [patientWardDept, setPatientWardDept] = useState("");
   const [staffJobTitle, setStaffJobTitle] = useState("");
@@ -181,7 +181,7 @@ export default function LandingReportPage() {
             witnessType,
             witnessWardDept,
             witnessJobTitle,
-            witenssPhone: witnessPhone, // Safely maps to Go backend's json typo structure
+            witenssPhone: witnessPhone,
             isNearMiss,
             causeGroup,
             causes,
@@ -198,7 +198,7 @@ export default function LandingReportPage() {
             reporterDesignation,
             signature,
             reporterInfo,
-            date: reporterDate, // Maps precisely to expected "date" JSON tag
+            date: reporterDate,
             severityLevel,
             incidentStatus,
           }),
@@ -349,7 +349,7 @@ export default function LandingReportPage() {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold border-b pb-2 mb-4 text-muted-foreground">
-                      Step 1a: Reporter Information
+                      Reporter Information
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -450,7 +450,7 @@ export default function LandingReportPage() {
 
                   <div>
                     <h3 className="text-lg font-semibold border-b pb-2 mb-4 text-muted-foreground">
-                      Step 1b: Principal Person Involved (Subject)
+                      Principal Person Involved (Subject)
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -545,7 +545,6 @@ export default function LandingReportPage() {
                         </Select>
                       </div>
 
-                      {/* Conditional Fields Based on Selected Principal Type */}
                       {principalType === "patient" && (
                         <>
                           <div className="space-y-2">
@@ -664,7 +663,7 @@ export default function LandingReportPage() {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold border-b pb-2 mb-4 text-muted-foreground">
-                      Step 2a: Incident Location & Timings
+                      Incident Location & Timings
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -821,7 +820,7 @@ export default function LandingReportPage() {
 
                   <div>
                     <h3 className="text-lg font-semibold border-b pb-2 mb-4 text-muted-foreground">
-                      Step 2b: Witnesses Information
+                      Witnesses Information
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2 md:col-span-2">
@@ -907,7 +906,7 @@ export default function LandingReportPage() {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold border-b pb-2 mb-4 text-muted-foreground">
-                      Step 3a: Situational Description & Causes
+                      Situational Description & Causes
                     </h3>
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1008,7 +1007,7 @@ export default function LandingReportPage() {
 
                   <div>
                     <h3 className="text-lg font-semibold border-b pb-2 mb-4 text-muted-foreground">
-                      Step 3b: Asset & Equipment Management
+                      Asset & Equipment Management
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
