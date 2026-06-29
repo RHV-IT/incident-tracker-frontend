@@ -14,22 +14,58 @@ Incident Tracker is a Next.js 16 application for workplace safety incident manag
 
 ```
 incidenttracker/
+├── .env                          # Environment variables (API URL)
+├── AGENTS.md                     # AI agent guidelines
+├── README.md                     # Project documentation
+├── eslint.config.mjs             # ESLint configuration
+├── next.config.ts                # Next.js configuration
+├── package.json
+├── postcss.config.mjs            # PostCSS/Tailwind configuration
+├── tsconfig.json                 # TypeScript configuration
+│
 ├── app/
-│   ├── (auth)/login/page.tsx        # Authentication page (public)
-│   ├── (dashboard)/                 # Protected routes with sidebar
-│   │   ├── layout.tsx              # Dashboard layout with navigation
-│   │   ├── types/navTypes.ts       # Navigation type definitions
-│   │   └── dashboard/
-│   │       ├── page.tsx            # Incident listing
-│   │       ├── register/page.tsx   # User registration (Admin+)
-│   │       ├── users/page.tsx      # User management (Super Admin)
-│   │       └── resetpassword/page.tsx # Password reset (Super Admin)
-│   ├── globals.css
-│   ├── layout.tsx                  # Root layout
-│   └── page.tsx                    # Public incident reporting form
-├── components/ui/                  # shadcn/ui components
-├── lib/utils.ts                    # Utility functions (cn helper)
-└── ...config files
+│   ├── favicon.ico
+│   ├── globals.css               # Global styles + CSS variables
+│   ├── layout.tsx                # Root layout (HTML shell + Toaster)
+│   ├── page.tsx                  # PUBLIC: Multi-step incident reporting form
+│   │
+│   ├── (auth)/
+│   │   ├── layout.tsx            # Auth layout (centered card wrapper)
+│   │   └── login/
+│   │       └── page.tsx          # Login page (email/password, JWT)
+│   │
+│   └── (dashboard)/
+│       ├── layout.tsx            # Dashboard layout (sidebar + auth guard)
+│       ├── types/
+│       │   └── navTypes.ts       # NavigationItem type definitions
+│       └── dashboard/
+│           ├── page.tsx              # Incident listing table + detail dialog
+│           ├── IncidentTable.tsx     # Incident table component
+│           ├── IncidentDetails.tsx   # Incident detail dialog component
+│           ├── AdminManagementForm.tsx # Management report form component
+│           ├── register/page.tsx     # User registration (Admin+ only)
+│           ├── users/page.tsx        # User search/enable-disable (Super Admin)
+│           └── resetpassword/page.tsx # Password override (Super Admin)
+│
+├── components/
+│   └── ui/
+│       ├── alert.tsx            # Alert, AlertTitle, AlertDescription
+│       ├── button.tsx           # Button with variants and sizes
+│       ├── card.tsx             # Card, CardHeader, CardContent, CardFooter
+│       ├── dialog.tsx           # Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
+│       ├── input.tsx            # Input field
+│       ├── label.tsx            # Form label (Radix-based)
+│       ├── select.tsx           # Select components with scroll buttons
+│       ├── sonner.tsx           # Themed toast notifications
+│       ├── table.tsx            # Table, TableHeader, TableBody, TableRow, TableHead, TableCell
+│       └── textarea.tsx         # Multi-line text input
+│
+├── lib/
+│   └── utils.ts                  # cn() utility (clsx + tailwind-merge)
+│
+└── public/
+    └── images/
+        └── rhv logo.png
 ```
 
 ## Code Conventions
@@ -70,6 +106,20 @@ incidenttracker/
 
 Check role via `user.role === "superadmin"` for Super Admin features.
 
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+NEXT_PUBLIC_apiurl=http://localhost:3002/api/v1
+```
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `NEXT_PUBLIC_apiurl` | Base URL of the backend API | Yes |
+
+> **Note**: The `NEXT_PUBLIC_` prefix exposes the variable to the browser. Do not put sensitive server-only secrets here.
+
 ## API Integration
 
 ### Environment
@@ -82,6 +132,7 @@ Check role via `user.role === "superadmin"` for Super Admin features.
 - `POST /incidents` - Create new incident report
 - `POST /incidents/${id}/management` - Create management report
 - `PATCH /incidents/${id}/status` - Update incident status
+- `GET /user?email=${email}` - Search user by email (Super Admin)
 - `PUT /auth/enable` - Enable user account
 - `PUT /auth/disable` - Disable user account
 - `PUT /auth/resetpassword` - Reset user password
@@ -179,15 +230,15 @@ export interface IncidentManagement {
 ## Component Usage
 
 ### UI Components (shadcn/ui)
-- `Button` - Use `variant="default|outline|destructive"` and `size="sm|lg"`
-- `Input` - Standard form input with `disabled` state
-- `Label` - Form field labels with `className="text-xs font-bold uppercase"`
+- `Button` - Use `variant="default|outline|destructive|ghost|link"` and `size="sm|lg|icon"`
+- `Input` - Standard form input with focus/disabled states
+- `Label` - Radix-based form labels
 - `Textarea` - Multi-line text input
-- `Select` - Dropdown with `SelectTrigger`, `SelectContent`, `SelectItem`
-- `Card` - Container with `CardHeader`, `CardContent`, `CardFooter`
-- `Dialog` - Modal with `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`
+- `Select` - `Select`, `SelectTrigger`, `SelectContent`, `SelectItem`, `SelectGroup`, `SelectLabel`, `SelectValue`, `SelectSeparator`, `SelectScrollUpButton`, `SelectScrollDownButton`
+- `Card` - Container with `CardHeader`, `CardContent`, `CardFooter`, `CardTitle`, `CardDescription`
+- `Dialog` - Modal with `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter`, `DialogTrigger`, `DialogOverlay`, `DialogPortal`, `DialogClose`
 - `Alert` - Error/success messages with `AlertTitle`, `AlertDescription`
-- `Table` - Data display with `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`
+- `Table` - Data display with `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`, `TableFooter`, `TableCaption`
 
 ### Framer Motion
 - Use `motion.div`, `motion.button` for animations

@@ -78,65 +78,12 @@ incidenttracker/
 │       │   └── navTypes.ts       # NavigationItem type definitions
 │       └── dashboard/
 │           ├── page.tsx          # Incident listing table + detail dialog
+│           ├── IncidentTable.tsx # Incident table component
+│           ├── IncidentDetails.tsx # Incident detail dialog component
+│           ├── AdminManagementForm.tsx # Management report form component
 │           ├── register/page.tsx # User registration (Admin+ only)
 │           ├── users/page.tsx    # User search/enable-disable (Super Admin)
 │           └── resetpassword/page.tsx # Password override (Super Admin)
-│
-├── components/
-│   └── ui/
-│       ├── alert.tsx            # Alert, AlertTitle, AlertDescription, AlertAction
-│       ├── button.tsx           # Button with variants and sizes
-│       ├── card.tsx             # Card, CardHeader, CardContent, CardFooter
-│       ├── dialog.tsx           # Dialog, DialogContent, DialogHeader
-│       ├── input.tsx            # Input field
-│       ├── label.tsx            # Form label (Radix-based)
-│       ├── select.tsx           # Select, SelectTrigger, SelectContent, SelectItem
-│       ├── sonner.tsx           # Themed toast notifications
-│       ├── table.tsx            # Table, TableHeader, TableBody, TableRow
-│       └── textarea.tsx         # Multi-line text input
-│
-├── lib/
-│   └── utils.ts                  # cn() utility (clsx + tailwind-merge)
-│
-└── public/
-    ├── images/
-    │   └── rhv logo.png
-    └── ...static assets
-```
-incidenttracker/
-├── .env                          # Environment variables (API URL)
-├── .gitignore
-├── AGENTS.md                     # AI agent guidelines
-├── README.md                     # This file
-├── eslint.config.mjs             # ESLint configuration
-├── next.config.ts                # Next.js configuration
-├── package.json
-├── postcss.config.mjs            # PostCSS/Tailwind configuration
-├── tsconfig.json                 # TypeScript configuration
-│
-├── app/
-│   ├── favicon.ico
-│   ├── globals.css               # Global styles + CSS variables
-│   ├── layout.tsx                # Root layout (HTML shell + Toaster)
-│   ├── page.tsx                  # PUBLIC: Multi-step incident reporting form
-│   │
-│   ├── (auth)/
-│   │   ├── layout.tsx            # Auth layout (centered card wrapper)
-│   │   └── login/
-│   │       └── page.tsx          # Login page (email/password, JWT)
-│   │
-│   └── (dashboard)/
-│       ├── layout.tsx            # Dashboard layout (sidebar + auth guard)
-│       ├── types/
-│       │   └── navTypes.ts       # NavigationItem type definitions
-│       └── dashboard/
-│           ├── page.tsx          # Incident listing table + detail dialog
-│           ├── register/
-│           │   └── page.tsx      # User registration (Admin+ only)
-│           ├── resetpassword/
-│           │   └── page.tsx      # Password override (Super Admin only)
-│           └── users/
-│               └── page.tsx      # User search/enable/disable (Super Admin)
 │
 ├── components/
 │   └── ui/
@@ -248,11 +195,13 @@ const baseUrl = process.env.NEXT_PUBLIC_apiurl;
 | Method | Endpoint | Auth Required | Description |
 |--------|----------|---------------|-------------|
 | POST | `/auth/login` | No | Authenticate user, returns `{ token, user }` |
+| POST | `/auth/register` | Yes (Admin+) | Register new user |
 | GET | `/incidents?page=N&limit=10` | Yes | Fetch paginated incident list |
 | GET | `/incidents/{id}/management` | Yes | Get management report for incident |
 | POST | `/incidents` | No | Create new incident report |
 | POST | `/incidents/{id}/management` | Yes (Admin+) | Create management report |
 | PATCH | `/incidents/{id}/status` | Yes | Update incident status |
+| GET | `/user?email={email}` | Yes (Super Admin) | Search user by email |
 | PUT | `/auth/enable` | Yes (Super Admin) | Enable user account |
 | PUT | `/auth/disable` | Yes (Super Admin) | Disable user account |
 | PUT | `/auth/resetpassword` | Yes (Super Admin) | Reset user password |
