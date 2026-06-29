@@ -78,10 +78,12 @@ Check role via `user.role === "superadmin"` for Super Admin features.
 
 ### Endpoints
 - `GET /incidents?page=${page}&limit=10` - Paginated incident list
-- `POST /auth/login` - Authentication (returns `{ token, user }`)
-- `POST /incidents` - Create incident report
+- `GET /incidents/${id}/management` - Get management report for incident
+- `POST /incidents` - Create new incident report
+- `POST /incidents/${id}/management` - Create management report
 - `PATCH /incidents/${id}/status` - Update incident status
-- `PUT /auth/${enable|disable}` - Toggle user status
+- `PUT /auth/enable` - Enable user account
+- `PUT /auth/disable` - Disable user account
 - `PUT /auth/resetpassword` - Reset user password
 
 ### Headers
@@ -89,6 +91,88 @@ Check role via `user.role === "superadmin"` for Super Admin features.
 {
   Authorization: `Bearer ${token}`,
   "Content-Type": "application/json",
+}
+```
+
+## Data Structures
+
+### Incident Report Interface
+
+```typescript
+export interface IncidentReport {
+  id: number;
+  principalName: string;
+  principalGender: string;
+  principalDob: string;
+  principalType: string;
+  patientId?: string;
+  patientWardDept?: string;
+  staffJobTitle?: string;
+  staffPhone?: string;
+  staffPlaceOfWork?: string;
+  staffSite?: string;
+  peopleInvolved: string;
+  dateOfIncident: string;
+  timeOfIncident: string;
+  locationOfIncident: string;
+  incidentWardDept: string;
+  witnesses?: string;
+  witnessType?: string;
+  witnessWardDept?: string;
+  witnessJobTitle?: string;
+  witnessPhone?: string;
+  isNearMiss: boolean;
+  causeGroup: string;
+  causes: string;
+  prescribingDoctor?: string;
+  treatmentReceived: string;
+  equipmentInvolved: string;
+  equipmentModel?: string;
+  equipmentSentForRepair: boolean;
+  equipmentWithdrawn: boolean;
+  equipmentRetained: boolean;
+  equipmentNumber?: string;
+  isMedicalDevice?: string;
+  reporterName: string;
+  reporterDesignation: string;
+  signature: boolean;
+  reporterInfo: string;
+  date: string;
+  severityLevel: "critical" | "major" | "minor" | "near miss";
+  incidentStatus: "unresolved" | "inprogress" | "resolved";
+}
+```
+
+### Management Report Interface
+
+```typescript
+export interface IncidentManagement {
+  id?: number;
+  incidentId: number;
+  impactOnService: string;
+  contributoryFactors: string;
+  actionsTakenOutcomes: string;
+  recommendations: string;
+  lessonsLearned: string;
+  informedPatient: boolean;
+  informedRelative: boolean;
+  informedSeniorManager: boolean;
+  informedPharmacist: boolean;
+  policeIncidentNumber?: string;
+  informedOther?: string;
+  riskSeverity: number;
+  riskLikelihood: number;
+  riskRating: number;
+  ohsAbsenceOver3Days: boolean;
+  ohsActOfViolenceOrDanger: boolean;
+  ohsHospitalizationOver24Hours: boolean;
+  ohsStaffName?: string;
+  ohsStaffDob?: string;
+  ohsStaffAddress?: string;
+  managerName: string;
+  managerSignature: boolean;
+  managerDesignation: string;
+  managerDate: string;
 }
 ```
 

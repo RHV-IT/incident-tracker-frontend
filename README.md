@@ -78,6 +78,59 @@ incidenttracker/
 │       │   └── navTypes.ts       # NavigationItem type definitions
 │       └── dashboard/
 │           ├── page.tsx          # Incident listing table + detail dialog
+│           ├── register/page.tsx # User registration (Admin+ only)
+│           ├── users/page.tsx    # User search/enable-disable (Super Admin)
+│           └── resetpassword/page.tsx # Password override (Super Admin)
+│
+├── components/
+│   └── ui/
+│       ├── alert.tsx            # Alert, AlertTitle, AlertDescription, AlertAction
+│       ├── button.tsx           # Button with variants and sizes
+│       ├── card.tsx             # Card, CardHeader, CardContent, CardFooter
+│       ├── dialog.tsx           # Dialog, DialogContent, DialogHeader
+│       ├── input.tsx            # Input field
+│       ├── label.tsx            # Form label (Radix-based)
+│       ├── select.tsx           # Select, SelectTrigger, SelectContent, SelectItem
+│       ├── sonner.tsx           # Themed toast notifications
+│       ├── table.tsx            # Table, TableHeader, TableBody, TableRow
+│       └── textarea.tsx         # Multi-line text input
+│
+├── lib/
+│   └── utils.ts                  # cn() utility (clsx + tailwind-merge)
+│
+└── public/
+    ├── images/
+    │   └── rhv logo.png
+    └── ...static assets
+```
+incidenttracker/
+├── .env                          # Environment variables (API URL)
+├── .gitignore
+├── AGENTS.md                     # AI agent guidelines
+├── README.md                     # This file
+├── eslint.config.mjs             # ESLint configuration
+├── next.config.ts                # Next.js configuration
+├── package.json
+├── postcss.config.mjs            # PostCSS/Tailwind configuration
+├── tsconfig.json                 # TypeScript configuration
+│
+├── app/
+│   ├── favicon.ico
+│   ├── globals.css               # Global styles + CSS variables
+│   ├── layout.tsx                # Root layout (HTML shell + Toaster)
+│   ├── page.tsx                  # PUBLIC: Multi-step incident reporting form
+│   │
+│   ├── (auth)/
+│   │   ├── layout.tsx            # Auth layout (centered card wrapper)
+│   │   └── login/
+│   │       └── page.tsx          # Login page (email/password, JWT)
+│   │
+│   └── (dashboard)/
+│       ├── layout.tsx            # Dashboard layout (sidebar + auth guard)
+│       ├── types/
+│       │   └── navTypes.ts       # NavigationItem type definitions
+│       └── dashboard/
+│           ├── page.tsx          # Incident listing table + detail dialog
 │           ├── register/
 │           │   └── page.tsx      # User registration (Admin+ only)
 │           ├── resetpassword/
@@ -195,11 +248,11 @@ const baseUrl = process.env.NEXT_PUBLIC_apiurl;
 | Method | Endpoint | Auth Required | Description |
 |--------|----------|---------------|-------------|
 | POST | `/auth/login` | No | Authenticate user, returns `{ token, user }` |
-| POST | `/auth/register` | Yes (Admin+) | Register new user |
 | GET | `/incidents?page=N&limit=10` | Yes | Fetch paginated incident list |
+| GET | `/incidents/{id}/management` | Yes | Get management report for incident |
 | POST | `/incidents` | No | Create new incident report |
+| POST | `/incidents/{id}/management` | Yes (Admin+) | Create management report |
 | PATCH | `/incidents/{id}/status` | Yes | Update incident status |
-| GET | `/user?email={email}` | Yes (Super Admin) | Search user by email |
 | PUT | `/auth/enable` | Yes (Super Admin) | Enable user account |
 | PUT | `/auth/disable` | Yes (Super Admin) | Disable user account |
 | PUT | `/auth/resetpassword` | Yes (Super Admin) | Reset user password |
@@ -290,33 +343,83 @@ The dashboard features a collapsible sidebar with:
 
 ## Incident Data Structure
 
-Each incident report contains:
+### Incident Report Interface
 
 ```typescript
-interface Incident {
-  _id: string;
-  reporterName: string;
-  reporterEmail: string;
-  reporterDepartment: string;
-  reporterPosition: string;
-  reporterPhone: string;
-  incidentDate: string;
-  incidentTime: string;
-  incidentLocation: string;
-  incidentType: string;
-  severityLevel: "critical" | "major" | "minor" | "near miss";
-  description: string;
-  immediateActions: string;
-  peopleInvolved: string[];
-  witnesses: string[];
-  injuryDamage: string;
-  treatmentProvided: string;
+export interface IncidentReport {
+  id: number;
+  principalName: string;
+  principalGender: string;
+  principalDob: string;
+  principalType: string;
+  patientId?: string;
+  patientWardDept?: string;
+  staffJobTitle?: string;
+  staffPhone?: string;
+  staffPlaceOfWork?: string;
+  staffSite?: string;
+  peopleInvolved: string;
+  dateOfIncident: string;
+  timeOfIncident: string;
+  locationOfIncident: string;
+  incidentWardDept: string;
+  witnesses?: string;
+  witnessType?: string;
+  witnessWardDept?: string;
+  witnessJobTitle?: string;
+  witnessPhone?: string;
+  isNearMiss: boolean;
+  causeGroup: string;
+  causes: string;
+  prescribingDoctor?: string;
+  treatmentReceived: string;
   equipmentInvolved: string;
-  rootCause: string;
-  preventiveActions: string;
-  status: "resolved" | "inprogress" | "unresolved";
-  createdAt: string;
-  updatedAt: string;
+  equipmentModel?: string;
+  equipmentSentForRepair: boolean;
+  equipmentWithdrawn: boolean;
+  equipmentRetained: boolean;
+  equipmentNumber?: string;
+  isMedicalDevice?: string;
+  reporterName: string;
+  reporterDesignation: string;
+  signature: boolean;
+  reporterInfo: string;
+  date: string;
+  severityLevel: "critical" | "major" | "minor" | "near miss";
+  incidentStatus: "unresolved" | "inprogress" | "resolved";
+}
+```
+
+### Management Report Interface
+
+```typescript
+export interface IncidentManagement {
+  id?: number;
+  incidentId: number;
+  impactOnService: string;
+  contributoryFactors: string;
+  actionsTakenOutcomes: string;
+  recommendations: string;
+  lessonsLearned: string;
+  informedPatient: boolean;
+  informedRelative: boolean;
+  informedSeniorManager: boolean;
+  informedPharmacist: boolean;
+  policeIncidentNumber?: string;
+  informedOther?: string;
+  riskSeverity: number;
+  riskLikelihood: number;
+  riskRating: number;
+  ohsAbsenceOver3Days: boolean;
+  ohsActOfViolenceOrDanger: boolean;
+  ohsHospitalizationOver24Hours: boolean;
+  ohsStaffName?: string;
+  ohsStaffDob?: string;
+  ohsStaffAddress?: string;
+  managerName: string;
+  managerSignature: boolean;
+  managerDesignation: string;
+  managerDate: string;
 }
 ```
 
@@ -343,18 +446,18 @@ interface Incident {
 
 All components are in `components/ui/`:
 
-| Component | Variants/Options |
-|-----------|------------------|
-| `Button` | `default`, `outline`, `destructive`, `ghost`, `link` / `sm`, `default`, `lg`, `icon` |
+| Component | Exports |
+|-----------|---------|
+| `Button` | `Button` with `variant="default|outline|destructive|ghost|link"` and `size="sm|default|lg|icon"` |
 | `Input` | Standard input with focus/disabled states |
 | `Label` | Radix-based form labels |
 | `Textarea` | Multi-line text input |
-| `Select` | `SelectTrigger`, `SelectContent`, `SelectItem`, `SelectGroup`, `SelectLabel` |
-| `Card` | `CardHeader`, `CardContent`, `CardFooter`, `CardTitle`, `CardDescription` |
-| `Dialog` | `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter` |
-| `Alert` | `AlertTitle`, `AlertDescription`, `AlertAction` / `default`, `destructive` |
-| `Table` | `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`, `TableFooter` |
-| `Toaster` | Themed toast notifications with rich colors |
+| `Select` | `Select`, `SelectTrigger`, `SelectContent`, `SelectItem`, `SelectGroup`, `SelectLabel`, `SelectValue`, `SelectSeparator`, `SelectScrollUpButton`, `SelectScrollDownButton` |
+| `Card` | `Card`, `CardHeader`, `CardContent`, `CardFooter`, `CardTitle`, `CardDescription` |
+| `Dialog` | `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter`, `DialogTrigger`, `DialogOverlay`, `DialogPortal`, `DialogClose` |
+| `Alert` | `Alert`, `AlertTitle`, `AlertDescription` (uses `variant="default|destructive"`) |
+| `Table` | `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`, `TableFooter`, `TableCaption` |
+| `Toaster` | Themed toast notifications via `sonner` |
 
 ### Form Patterns
 
