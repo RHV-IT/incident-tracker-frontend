@@ -147,7 +147,7 @@ export default function Dashboard() {
         );
       }
     } catch (error: any) {
-      console.error(error.message);
+      console.log(error.message);
     } finally {
       setLoadingManagement(false);
     }
