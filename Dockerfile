@@ -14,6 +14,10 @@ COPY --from=deps /app/node_modules ./node_modules
 
 COPY . .
 
+ARG NEXT_PUBLIC_apiurl
+
+ENV NEXT_PUBLIC_apiurl=$NEXT_PUBLIC_apiurl
+
 RUN npm run build
 
 EXPOSE 3000

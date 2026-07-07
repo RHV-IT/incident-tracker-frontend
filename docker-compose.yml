@@ -1,10 +1,11 @@
 services:
   incidenttracker-frontend:
-    build: .
+    build:
+      context: .
+      args:
+        - NEXT_PUBLIC_apiurl=http://192.168.9.227:3002/api/v1
     ports:
       - "3003:3000"
-    environment:
-      - NEXT_PUBLIC_apiurl="http://192.168.9.227:3002/api/v1"
     env_file:
       - ".env"
     extra_hosts:
