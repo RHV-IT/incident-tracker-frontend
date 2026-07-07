@@ -16,6 +16,8 @@ COPY . .
 
 RUN npm run build
 
-FROM node:18-alpine as runner
+EXPOSE 3000
+
+CMD ["npm", "run", "start"]
 
 
