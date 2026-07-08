@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react"; // 👈 Added useState
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,8 +21,9 @@ import {
   Users,
   Wrench,
   Plus,
-  Eye, // 👈 Added Eye icon
-  MessageSquare, // 👈 Added message icon
+  Eye,
+  MessageSquare,
+  RefreshCw,
 } from "lucide-react";
 import {
   IncidentReport,
@@ -42,22 +43,85 @@ interface IncidentDetailsProps {
   loadingManagement: boolean;
   managementReport: IncidentManagement | null;
   isAddingManagement: boolean;
+  isEditingManagement: boolean;
   submittingManagement: boolean;
   mgmtForm: Partial<IncidentManagement>;
-  comments: any[]; // 👈 Added to interface
+  comments: any[];
   commentText: string;
   isAddingComment: boolean;
   submittingComment: boolean;
+  logs: any[];
+  loadingLogs: boolean;
   onClose: () => void;
   onStatusChange: (status: IncidentStatus) => void;
   onFormChange: (updated: Partial<IncidentManagement>) => void;
   onManagementSubmit: (e: React.FormEvent) => void;
+  onManagementUpdate: (e: React.FormEvent) => void;
   onStartAdding: () => void;
   onCancelAdding: () => void;
+  onStartEditing: () => void;
+  onCancelEditing: () => void;
   onCommentTextChange: (text: string) => void;
   onCommentSubmit: (e: React.FormEvent) => void;
   onStartAddingComment: () => void;
   onCancelAddingComment: () => void;
+}
+
+// Helper function to extract and format only the fields that changed
+function getLogChanges(oldVal: any, newVal: any): string[] {
+  if (!oldVal || !newVal) return [];
+  const changes: string[] = [];
+
+  const fieldLabels: Record<string, string> = {
+    impactOnService: "Impact on Service",
+    contributoryFactors: "Contributory Factors",
+    actionsTakenOutcomes: "Actions Taken / Outcomes",
+    recommendations: "Recommendations",
+    lessonsLearned: "Lessons Learned",
+    informedPatient: "Informed Patient",
+    informedRelative: "Informed Relative",
+    informedSeniorManager: "Informed Senior Manager",
+    informedPharmacist: "Informed Pharmacist",
+    policeIncidentNumber: "Police Incident Number",
+    informedOther: "Informed Other",
+    riskSeverity: "Risk Severity",
+    riskLikelihood: "Risk Likelihood",
+    riskRating: "Risk Rating",
+    ohsAbsenceOver3Days: "OHS Absence > 3 Days",
+    ohsActOfViolenceOrDanger: "OHS Act of Violence / Danger",
+    ohsHospitalizationOver24Hours: "OHS Hospitalization > 24 Hours",
+    ohsStaffName: "OHS Staff Name",
+    ohsStaffDob: "OHS Staff DOB",
+    ohsStaffAddress: "OHS Staff Address",
+    managerName: "Manager Name",
+    managerSignature: "Manager Signature Binding",
+    managerDesignation: "Manager Designation",
+    managerDate: "Manager Date",
+  };
+
+  const allKeys = Array.from(new Set([...Object.keys(oldVal), ...Object.keys(newVal)]));
+
+  for (const key of allKeys) {
+    if (key === "id" || key === "incidentId") continue;
+
+    const oldRaw = oldVal[key];
+    const newRaw = newVal[key];
+
+    const oldStr = oldRaw === undefined || oldRaw === null ? "" : String(oldRaw);
+    const newStr = newRaw === undefined || newRaw === null ? "" : String(newRaw);
+
+    if (oldStr !== newStr) {
+      const label = fieldLabels[key] || key;
+      const formatVal = (v: any) => {
+        if (v === true || v === "true") return "Yes";
+        if (v === false || v === "false") return "No";
+        if (v === "") return "(empty)";
+        return String(v);
+      };
+      changes.push(`${label}: "${formatVal(oldRaw)}" → "${formatVal(newRaw)}"`);
+    }
+  }
+  return changes;
 }
 
 export function IncidentDetails({
@@ -68,25 +132,37 @@ export function IncidentDetails({
   loadingManagement,
   managementReport,
   isAddingManagement,
+  isEditingManagement,
   submittingManagement,
   mgmtForm,
-  comments = [], // 👈 Default fallback assignment
+  comments = [],
   commentText,
   isAddingComment,
   submittingComment,
+  logs = [],
+  loadingLogs,
   onClose,
   onStatusChange,
   onFormChange,
   onManagementSubmit,
+  onManagementUpdate,
   onStartAdding,
   onCancelAdding,
+  onStartEditing,
+  onCancelEditing,
   onCommentTextChange,
   onCommentSubmit,
   onStartAddingComment,
   onCancelAddingComment,
 }: IncidentDetailsProps) {
   const isCoreAdmin = userRole === "admin" || userRole === "superadmin";
-  const [showComments, setShowComments] = useState<boolean>(false); // 👈 Local UI state wrapper for line 505 toggle
+  const [showComments, setShowComments] = useState<boolean>(false);
+  const [logPage, setLogPage] = useState<number>(1);
+  const logsPerPage = 5;
+
+  useEffect(() => {
+    setLogPage(1);
+  }, [incident]);
 
   return (
     <Dialog open={!!incident} onOpenChange={(open) => !open && onClose()}>
@@ -471,20 +547,22 @@ export function IncidentDetails({
                 loadingManagement={loadingManagement}
                 managementReport={managementReport}
                 isAddingManagement={isAddingManagement}
+                isEditingManagement={isEditingManagement}
                 submittingManagement={submittingManagement}
                 mgmtForm={mgmtForm}
                 selectedIncident={incident}
                 onFormChange={onFormChange}
-                onSubmit={onManagementSubmit}
+                onSubmit={isEditingManagement ? onManagementUpdate : onManagementSubmit}
                 onStartAdding={onStartAdding}
                 onCancelAdding={onCancelAdding}
+                onStartEditing={onStartEditing}
+                onCancelEditing={onCancelEditing}
               />
 
               {/* Administrative Comment Section */}
               {managementReport && isAdmin && (
                 <div className="mt-6 pt-6 border-t border-dashed space-y-4">
                   <div className="flex justify-between items-center">
-                    {/* 💡 Line 505 Toggle Button Fix */}
                     <Button
                       type="button"
                       variant="ghost"
@@ -509,7 +587,6 @@ export function IncidentDetails({
                     )}
                   </div>
 
-                  {/* Comments Display Block */}
                   {showComments && (
                     <div className="space-y-3 max-h-60 overflow-y-auto pr-2 animate-in fade-in duration-200">
                       {comments.length === 0 ? (
@@ -567,6 +644,111 @@ export function IncidentDetails({
                 </div>
               )}
             </div>
+
+            {/* Audit Logs Section (Admins Only) */}
+            {isCoreAdmin && (
+              <div className="border-t pt-6 space-y-4">
+                <h2 className="text-base font-semibold tracking-tight flex items-center gap-2 text-foreground">
+                  <Activity className="h-5 w-5 text-emerald-600" />{" "}
+                  Management Activity Log Files
+                </h2>
+
+                {loadingLogs ? (
+                  <div className="text-xs text-muted-foreground flex items-center gap-2 py-2">
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin text-emerald-600" />
+                    Loading configuration history logs...
+                  </div>
+                ) : logs.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic bg-muted/20 p-3 rounded-lg border">
+                    No administrative mutation history has been recorded for this dossier yet.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="overflow-x-auto border rounded-lg bg-background">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-muted/50 border-b text-xs font-semibold text-foreground">
+                            <th className="p-2.5 pl-4">Timestamp</th>
+                            <th className="p-2.5">Operator</th>
+                            <th className="p-2.5">Action</th>
+                            <th className="p-2.5 pr-4">Modifications / Changes Made</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y text-xs text-muted-foreground">
+                          {logs
+                            .slice((logPage - 1) * logsPerPage, logPage * logsPerPage)
+                            .map((log) => {
+                              // Dynamically extract the specific diffs 
+                              const fieldChanges = getLogChanges(log.oldValue, log.newValue);
+
+                              return (
+                                <tr key={log.id} className="hover:bg-muted/10 transition-colors">
+                                  <td className="p-2.5 pl-4 whitespace-nowrap align-top">
+                                    {log.createdAt ? new Date(log.createdAt).toLocaleString() : "N/A"}
+                                  </td>
+                                  <td className="p-2.5 font-medium text-foreground whitespace-nowrap align-top">
+                                    {log.userName || `User ID: ${log.changedBy}`}
+                                  </td>
+                                  <td className="p-2.5 whitespace-nowrap align-top">
+                                    <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-mono text-[10px] border border-emerald-200">
+                                      {log.action}
+                                    </span>
+                                  </td>
+                                  <td className="p-2.5 pr-4 text-xs align-top">
+                                    {fieldChanges.length === 0 ? (
+                                      <span className="text-muted-foreground/50 italic">No field differences mapped</span>
+                                    ) : (
+                                      <ul className="list-disc pl-4 space-y-1 text-foreground/90">
+                                        {fieldChanges.map((change, idx) => (
+                                          <li key={idx} className="leading-normal">
+                                            {change}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {logs.length > logsPerPage && (
+                      <div className="flex items-center justify-between text-xs pt-1 px-1">
+                        <div className="text-muted-foreground">
+                          Showing {((logPage - 1) * logsPerPage) + 1}-
+                          {Math.min(logs.length, logPage * logsPerPage)} of {logs.length} revision statements
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-7 px-2.5 text-xs"
+                            disabled={logPage === 1}
+                            onClick={() => setLogPage((p) => p - 1)}
+                          >
+                            Previous
+                          </Button>
+                          <span className="text-muted-foreground">
+                            Page {logPage} of {Math.ceil(logs.length / logsPerPage)}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-7 px-2.5 text-xs"
+                            disabled={logPage >= Math.ceil(logs.length / logsPerPage)}
+                            onClick={() => setLogPage((p) => p + 1)}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </DialogContent>

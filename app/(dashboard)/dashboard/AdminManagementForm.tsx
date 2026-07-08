@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Plus } from "lucide-react";
+import { RefreshCw, Plus, Edit2 } from "lucide-react";
 import { IncidentManagement, IncidentReport } from "./types";
 
 interface AdminManagementFormProps {
@@ -10,6 +10,7 @@ interface AdminManagementFormProps {
   loadingManagement: boolean;
   managementReport: IncidentManagement | null;
   isAddingManagement: boolean;
+  isEditingManagement: boolean;
   submittingManagement: boolean;
   mgmtForm: Partial<IncidentManagement>;
   selectedIncident: IncidentReport;
@@ -17,6 +18,8 @@ interface AdminManagementFormProps {
   onSubmit: (e: React.FormEvent) => void;
   onStartAdding: () => void;
   onCancelAdding: () => void;
+  onStartEditing: () => void;
+  onCancelEditing: () => void;
 }
 
 export function AdminManagementForm({
@@ -24,12 +27,15 @@ export function AdminManagementForm({
   loadingManagement,
   managementReport,
   isAddingManagement,
+  isEditingManagement,
   submittingManagement,
   mgmtForm,
   onFormChange,
   onSubmit,
   onStartAdding,
   onCancelAdding,
+  onStartEditing,
+  onCancelEditing,
 }: AdminManagementFormProps) {
   if (loadingManagement) {
     return (
@@ -40,208 +46,224 @@ export function AdminManagementForm({
     );
   }
 
-  // 1. Any user can view the management report if it exists
-  if (managementReport) {
+  // 1. Static Display Mode (Any user reads it; authorized users see the Edit action button)
+  if (managementReport && !isEditingManagement) {
     return (
-      <div className="bg-emerald-50/10 p-5 rounded-xl border border-emerald-200/50 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-4">
-          <h3 className="text-xs font-semibold text-emerald-800 tracking-wider uppercase border-b pb-1">
-            Management Overview
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-muted-foreground">
-            <div>
-              <span className="text-xs font-medium text-muted-foreground">
-                Impact on Service
-              </span>
-              <p className="bg-background p-2.5 rounded-lg border mt-1 text-xs text-foreground">
-                {managementReport.impactOnService}
-              </p>
-            </div>
-            <div>
-              <span className="text-xs font-medium text-muted-foreground">
-                Contributory Factors
-              </span>
-              <p className="bg-background p-2.5 rounded-lg border mt-1 text-xs text-foreground">
-                {managementReport.contributoryFactors}
-              </p>
-            </div>
-            <div>
-              <span className="text-xs font-medium text-muted-foreground">
-                Actions / Outcomes
-              </span>
-              <p className="bg-background p-2.5 rounded-lg border mt-1 text-xs text-foreground">
-                {managementReport.actionsTakenOutcomes}
-              </p>
-            </div>
-            <div>
-              <span className="text-xs font-medium text-muted-foreground">
-                Recommendations
-              </span>
-              <p className="bg-background p-2.5 rounded-lg border mt-1 text-xs text-foreground">
-                {managementReport.recommendations}
-              </p>
-            </div>
-            <div className="sm:col-span-2">
-              <span className="text-xs font-medium text-muted-foreground">
-                Lessons Learned
-              </span>
-              <p className="bg-background p-2.5 rounded-lg border mt-1 text-xs text-foreground">
-                {managementReport.lessonsLearned}
-              </p>
-            </div>
+      <div className="space-y-4">
+        {isAdmin && (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onStartEditing}
+              className="text-xs h-8 flex items-center gap-1.5 border-emerald-200 hover:bg-emerald-50 text-emerald-700"
+            >
+              <Edit2 className="h-3.5 w-3.5" /> Edit Management Report
+            </Button>
           </div>
+        )}
 
-          <div className="pt-3 border-t space-y-2">
-            <span className="text-xs font-semibold text-emerald-800 tracking-wider uppercase block">
-              Communication Metrics
-            </span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm text-muted-foreground">
-              <p>
-                <strong className="text-foreground font-medium">
-                  Patient Informed:
-                </strong>{" "}
-                {managementReport.informedPatient ? "Yes" : "No"}
-              </p>
-              <p>
-                <strong className="text-foreground font-medium">
-                  Relative Informed:
-                </strong>{" "}
-                {managementReport.informedRelative ? "Yes" : "No"}
-              </p>
-              <p>
-                <strong className="text-foreground font-medium">
-                  Senior Manager:
-                </strong>{" "}
-                {managementReport.informedSeniorManager ? "Yes" : "No"}
-              </p>
-              <p>
-                <strong className="text-foreground font-medium">
-                  Pharmacist Informed:
-                </strong>{" "}
-                {managementReport.informedPharmacist ? "Yes" : "No"}
-              </p>
+        <div className="bg-emerald-50/10 p-5 rounded-xl border border-emerald-200/50 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 space-y-4">
+            <h3 className="text-xs font-semibold text-emerald-800 tracking-wider uppercase border-b pb-1">
+              Management Overview
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-muted-foreground">
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Impact on Service
+                </span>
+                <p className="bg-background p-2.5 rounded-lg border mt-1 text-xs text-foreground">
+                  {managementReport.impactOnService}
+                </p>
+              </div>
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Contributory Factors
+                </span>
+                <p className="bg-background p-2.5 rounded-lg border mt-1 text-xs text-foreground">
+                  {managementReport.contributoryFactors}
+                </p>
+              </div>
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Actions / Outcomes
+                </span>
+                <p className="bg-background p-2.5 rounded-lg border mt-1 text-xs text-foreground">
+                  {managementReport.actionsTakenOutcomes}
+                </p>
+              </div>
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Recommendations
+                </span>
+                <p className="bg-background p-2.5 rounded-lg border mt-1 text-xs text-foreground">
+                  {managementReport.recommendations}
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Lessons Learned
+                </span>
+                <p className="bg-background p-2.5 rounded-lg border mt-1 text-xs text-foreground">
+                  {managementReport.lessonsLearned}
+                </p>
+              </div>
             </div>
-            {(managementReport.policeIncidentNumber ||
-              managementReport.informedOther) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground pt-1">
-                  {managementReport.policeIncidentNumber && (
+
+            <div className="pt-3 border-t space-y-2">
+              <span className="text-xs font-semibold text-emerald-800 tracking-wider uppercase block">
+                Communication Metrics
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm text-muted-foreground">
+                <p>
+                  <strong className="text-foreground font-medium">
+                    Patient Informed:
+                  </strong>{" "}
+                  {managementReport.informedPatient ? "Yes" : "No"}
+                </p>
+                <p>
+                  <strong className="text-foreground font-medium">
+                    Relative Informed:
+                  </strong>{" "}
+                  {managementReport.informedRelative ? "Yes" : "No"}
+                </p>
+                <p>
+                  <strong className="text-foreground font-medium">
+                    Senior Manager:
+                  </strong>{" "}
+                  {managementReport.informedSeniorManager ? "Yes" : "No"}
+                </p>
+                <p>
+                  <strong className="text-foreground font-medium">
+                    Pharmacist Informed:
+                  </strong>{" "}
+                  {managementReport.informedPharmacist ? "Yes" : "No"}
+                </p>
+              </div>
+              {(managementReport.policeIncidentNumber ||
+                managementReport.informedOther) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground pt-1">
+                    {managementReport.policeIncidentNumber && (
+                      <p>
+                        <strong className="text-foreground font-medium">
+                          Police Incident Number:
+                        </strong>{" "}
+                        {managementReport.policeIncidentNumber}
+                      </p>
+                    )}
+                    {managementReport.informedOther && (
+                      <p>
+                        <strong className="text-foreground font-medium">
+                          Other Party Informed:
+                        </strong>{" "}
+                        {managementReport.informedOther}
+                      </p>
+                    )}
+                  </div>
+                )}
+            </div>
+
+            {(managementReport.ohsStaffName ||
+              managementReport.ohsAbsenceOver3Days) && (
+                <div className="pt-3 border-t space-y-2 bg-muted/30 p-3 rounded-lg border">
+                  <span className="text-xs font-semibold text-muted-foreground tracking-wider uppercase block">
+                    Occupational Health & Safety Matrix
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-muted-foreground">
                     <p>
                       <strong className="text-foreground font-medium">
-                        Police Incident Number:
+                        Absence &gt; 3 Days:
                       </strong>{" "}
-                      {managementReport.policeIncidentNumber}
+                      {managementReport.ohsAbsenceOver3Days ? "Yes" : "No"}
                     </p>
-                  )}
-                  {managementReport.informedOther && (
                     <p>
                       <strong className="text-foreground font-medium">
-                        Other Party Informed:
+                        Violence / Danger:
                       </strong>{" "}
-                      {managementReport.informedOther}
+                      {managementReport.ohsActOfViolenceOrDanger ? "Yes" : "No"}
                     </p>
-                  )}
+                    <p>
+                      <strong className="text-foreground font-medium">
+                        Hospitalized &gt; 24h:
+                      </strong>{" "}
+                      {managementReport.ohsHospitalizationOver24Hours
+                        ? "Yes"
+                        : "No"}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-muted-foreground pt-1">
+                    <p>
+                      <strong className="text-foreground font-medium">
+                        Target Staff Name:
+                      </strong>{" "}
+                      {managementReport.ohsStaffName || "N/A"}
+                    </p>
+                    <p>
+                      <strong className="text-foreground font-medium">
+                        Staff DOB:
+                      </strong>{" "}
+                      {managementReport.ohsStaffDob || "N/A"}
+                    </p>
+                    <p>
+                      <strong className="text-foreground font-medium">
+                        Home Address:
+                      </strong>{" "}
+                      {managementReport.ohsStaffAddress || "N/A"}
+                    </p>
+                  </div>
                 </div>
               )}
           </div>
 
-          {(managementReport.ohsStaffName ||
-            managementReport.ohsAbsenceOver3Days) && (
-              <div className="pt-3 border-t space-y-2 bg-muted/30 p-3 rounded-lg border">
-                <span className="text-xs font-semibold text-muted-foreground tracking-wider uppercase block">
-                  Occupational Health & Safety Matrix
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-muted-foreground">
-                  <p>
-                    <strong className="text-foreground font-medium">
-                      Absence &gt; 3 Days:
-                    </strong>{" "}
-                    {managementReport.ohsAbsenceOver3Days ? "Yes" : "No"}
-                  </p>
-                  <p>
-                    <strong className="text-foreground font-medium">
-                      Violence / Danger:
-                    </strong>{" "}
-                    {managementReport.ohsActOfViolenceOrDanger ? "Yes" : "No"}
-                  </p>
-                  <p>
-                    <strong className="text-foreground font-medium">
-                      Hospitalized &gt; 24h:
-                    </strong>{" "}
-                    {managementReport.ohsHospitalizationOver24Hours
-                      ? "Yes"
-                      : "No"}
-                  </p>
+          <div className="space-y-4 border-l pl-0 md:pl-6 border-emerald-100 flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="bg-background p-3 rounded-lg border text-sm text-muted-foreground space-y-1.5">
+                <p>
+                  <strong className="text-foreground font-medium">
+                    Risk Severity Score:
+                  </strong>{" "}
+                  {managementReport.riskSeverity} / 5
+                </p>
+                <p>
+                  <strong className="text-foreground font-medium">
+                    Risk Likelihood Score:
+                  </strong>{" "}
+                  {managementReport.riskLikelihood} / 5
+                </p>
+                <div className="mt-2 pt-2 border-t font-semibold text-rose-600">
+                  Combined Risk Product Rating: {managementReport.riskRating}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-muted-foreground pt-1">
-                  <p>
-                    <strong className="text-foreground font-medium">
-                      Target Staff Name:
-                    </strong>{" "}
-                    {managementReport.ohsStaffName || "N/A"}
-                  </p>
-                  <p>
-                    <strong className="text-foreground font-medium">
-                      Staff DOB:
-                    </strong>{" "}
-                    {managementReport.ohsStaffDob || "N/A"}
-                  </p>
-                  <p>
-                    <strong className="text-foreground font-medium">
-                      Home Address:
-                    </strong>{" "}
-                    {managementReport.ohsStaffAddress || "N/A"}
-                  </p>
-                </div>
-              </div>
-            )}
-        </div>
-
-        <div className="space-y-4 border-l pl-0 md:pl-6 border-emerald-100 flex flex-col justify-between">
-          <div className="space-y-3">
-            <div className="bg-background p-3 rounded-lg border text-sm text-muted-foreground space-y-1.5">
-              <p>
-                <strong className="text-foreground font-medium">
-                  Risk Severity Score:
-                </strong>{" "}
-                {managementReport.riskSeverity} / 5
-              </p>
-              <p>
-                <strong className="text-foreground font-medium">
-                  Risk Likelihood Score:
-                </strong>{" "}
-                {managementReport.riskLikelihood} / 5
-              </p>
-              <div className="mt-2 pt-2 border-t font-semibold text-rose-600">
-                Combined Risk Product Rating: {managementReport.riskRating}
               </div>
             </div>
-          </div>
-          <div className="text-sm bg-emerald-800 text-white p-4 rounded-xl space-y-2 shadow-sm">
-            <span className="text-xs font-semibold tracking-wider uppercase block border-b border-white/20 pb-1">
-              Sign-Off Status
-            </span>
-            <p className="text-white/90">
-              <strong>Manager Name:</strong> {managementReport.managerName}
-            </p>
-            <p className="text-white/90">
-              <strong>Designation:</strong>{" "}
-              {managementReport.managerDesignation}
-            </p>
-            <p className="text-white/90">
-              <strong>Authorization Date:</strong>{" "}
-              {managementReport.managerDate}
-            </p>
-            <span className="text-[10px] font-semibold bg-emerald-950 px-2 py-0.5 rounded text-emerald-300 inline-block mt-1">
-              ✓ Verified Signature
-            </span>
+            <div className="text-sm bg-emerald-800 text-white p-4 rounded-xl space-y-2 shadow-sm">
+              <span className="text-xs font-semibold tracking-wider uppercase block border-b border-white/20 pb-1">
+                Sign-Off Status
+              </span>
+              <p className="text-white/90">
+                <strong>Manager Name:</strong> {managementReport.managerName}
+              </p>
+              <p className="text-white/90">
+                <strong>Designation:</strong>{" "}
+                {managementReport.managerDesignation}
+              </p>
+              <p className="text-white/90">
+                <strong>Authorization Date:</strong>{" "}
+                {managementReport.managerDate}
+              </p>
+              <span className="text-[10px] font-semibold bg-emerald-950 px-2 py-0.5 rounded text-emerald-300 inline-block mt-1">
+                ✓ Verified Signature
+              </span>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  // 2. Only Admins can see the creation/empty prompt button if no report exists
-  if (isAdmin && !isAddingManagement) {
+  // 2. Initial Setup Form Prompt (Authorized users see this if dossier record doesn't exist)
+  if (isAdmin && !isAddingManagement && !isEditingManagement) {
     return (
       <div className="text-center py-8 border border-dashed rounded-xl bg-muted/10">
         <p className="text-sm text-muted-foreground mb-3">
@@ -255,12 +277,12 @@ export function AdminManagementForm({
     );
   }
 
-  // 3. Only Admins can see and access the configuration form layout
-  if (isAdmin && isAddingManagement) {
+  // 3. Form Input View Block (Reused contextually for Add or Edit Actions)
+  if (isAdmin && (isAddingManagement || isEditingManagement)) {
     return (
       <form
         onSubmit={onSubmit}
-        className="bg-muted/40 p-5 rounded-xl border space-y-6"
+        className="bg-muted/40 p-5 rounded-xl border space-y-6 max-w-full animate-in fade-in duration-200"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
@@ -628,7 +650,7 @@ export function AdminManagementForm({
           <Button
             type="button"
             variant="ghost"
-            onClick={onCancelAdding}
+            onClick={isEditingManagement ? onCancelEditing : onCancelAdding}
             className="text-xs h-9"
           >
             Cancel
@@ -636,16 +658,21 @@ export function AdminManagementForm({
           <Button
             type="submit"
             disabled={submittingManagement}
-            className="bg-emerald-600 text-white font-medium text-xs h-9"
+            className="bg-emerald-600 text-white font-medium text-xs h-9 px-4"
           >
-            Save Management Log
+            {submittingManagement
+              ? "Saving Variables..."
+              : isEditingManagement
+                ? "Update Management Log"
+                : "Save Management Log"
+            }
           </Button>
         </div>
       </form>
     );
   }
 
-  // 4. Fallback for non-admins if no report is filed yet
+  // 4. Fallback For Basic Non-Privileged Client Profiles
   return (
     <div className="text-center py-6">
       <p className="text-sm text-muted-foreground">

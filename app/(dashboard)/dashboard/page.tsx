@@ -57,16 +57,20 @@ export default function Dashboard() {
     useState<IncidentManagement | null>(null);
   const [loadingManagement, setLoadingManagement] = useState<boolean>(false);
   const [isAddingManagement, setIsAddingManagement] = useState<boolean>(false);
+  const [isEditingManagement, setIsEditingManagement] = useState<boolean>(false);
   const [submittingManagement, setSubmittingManagement] =
     useState<boolean>(false);
   const [mgmtForm, setMgmtForm] =
     useState<Partial<IncidentManagement>>(DEFAULT_MGMT_FORM);
 
-  // Administrative Comment States
-  const [comments, setComments] = useState<any[]>([]); // 👈 Added comments array state
+  // Administrative Comment & Logs States
+  const [comments, setComments] = useState<any[]>([]);
   const [commentText, setCommentText] = useState<string>("");
   const [isAddingComment, setIsAddingComment] = useState<boolean>(false);
   const [submittingComment, setSubmittingComment] = useState<boolean>(false);
+
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -133,6 +137,7 @@ export default function Dashboard() {
     setLoadingManagement(true);
     setManagementReport(null);
     setIsAddingManagement(false);
+    setIsEditingManagement(false);
     const token = localStorage.getItem("token");
 
     try {
@@ -164,7 +169,6 @@ export default function Dashboard() {
     }
   };
 
-  // 👈 Added function to pull data from your new Go GET endpoint
   const fetchComments = async (incidentId: number) => {
     const token = localStorage.getItem("token");
     try {
@@ -181,12 +185,37 @@ export default function Dashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        // Fallback checks depending on whether your Go API outputs a direct JSON array or a wrapped object
-        console.log(data);
         setComments(Array.isArray(data) ? data : data.comments || []);
       }
     } catch (error: any) {
       console.error("Error fetching comments dossier:", error.message);
+    }
+  };
+
+  const fetchIncidentLogs = async (incidentId: number) => {
+    setLoadingLogs(true);
+    setLogs([]);
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_apiurl}/incidents/${incidentId}/managementlogs`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setLogs(data.incidentLogs || []);
+      }
+    } catch (error: any) {
+      console.error("Error fetching management audit logs:", error.message);
+    } finally {
+      setLoadingLogs(false);
     }
   };
 
@@ -197,7 +226,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (selectedIncident) {
       fetchManagementReport(selectedIncident.id);
-      fetchComments(selectedIncident.id); // 👈 Fetch comments here when dialog opens
+      fetchComments(selectedIncident.id);
+
+      if (user.role === "admin" || user.role === "superadmin") {
+        fetchIncidentLogs(selectedIncident.id);
+      }
 
       if (canManageReport) {
         setMgmtForm({
@@ -215,12 +248,14 @@ export default function Dashboard() {
       }
     } else {
       setManagementReport(null);
-      setComments([]); // 👈 Clear array when modal resets
+      setComments([]);
+      setLogs([]);
       setIsAddingManagement(false);
+      setIsEditingManagement(false);
       setIsAddingComment(false);
       setCommentText("");
     }
-  }, [selectedIncident, canManageReport]);
+  }, [selectedIncident, canManageReport, user.role]);
 
   useEffect(() => {
     const sev = mgmtForm.riskSeverity || 1;
@@ -303,10 +338,65 @@ export default function Dashboard() {
       setManagementReport(freshReport);
       setIsAddingManagement(false);
       toast.success("Documentation saved successfully to dossier.");
+
+      if (user.role === "admin" || user.role === "superadmin") {
+        fetchIncidentLogs(selectedIncident.id);
+      }
     } catch (error: any) {
       toast.error(error.message || "Database execution error occurred.");
     } finally {
       setSubmittingManagement(false);
+    }
+  };
+
+  const handleManagementUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedIncident || !canManageReport) return;
+
+    setSubmittingManagement(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_apiurl}/incidents/${selectedIncident.id}/management`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(mgmtForm),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to process modification update metrics variables.");
+      }
+
+      const freshReport = await response.json();
+      setManagementReport(freshReport);
+      setIsEditingManagement(false);
+      toast.success("Administrative report variables updated and logged successfully.");
+
+      if (user.role === "admin" || user.role === "superadmin") {
+        fetchIncidentLogs(selectedIncident.id);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Database execution modification sequence failed.");
+    } finally {
+      setSubmittingManagement(false);
+    }
+  };
+
+  const handleStartEditingManagement = () => {
+    if (managementReport) {
+      setMgmtForm({
+        ...DEFAULT_MGMT_FORM,
+        ...managementReport,
+        managerDate: managementReport.managerDate ? managementReport.managerDate.split("T")[0] : new Date().toISOString().split("T")[0],
+        ohsStaffDob: managementReport.ohsStaffDob ? managementReport.ohsStaffDob.split("T")[0] : "",
+      });
+      setIsEditingManagement(true);
     }
   };
 
@@ -341,7 +431,7 @@ export default function Dashboard() {
       toast.success("Comment logged successfully to dossier.");
       setCommentText("");
       setIsAddingComment(false);
-      fetchComments(selectedIncident.id); // 👈 Re-fetch comments so the list updates instantly!
+      fetchComments(selectedIncident.id);
     } catch (error: any) {
       toast.error(error.message || "Database execution error parsing comment payload.");
     } finally {
@@ -383,18 +473,24 @@ export default function Dashboard() {
         loadingManagement={loadingManagement}
         managementReport={managementReport}
         isAddingManagement={isAddingManagement}
+        isEditingManagement={isEditingManagement}
         submittingManagement={submittingManagement}
         mgmtForm={mgmtForm}
-        comments={comments} // 👈 Passed down array
+        comments={comments}
         commentText={commentText}
         isAddingComment={isAddingComment}
         submittingComment={submittingComment}
+        logs={logs}
+        loadingLogs={loadingLogs}
         onClose={() => setSelectedIncident(null)}
         onStatusChange={handleStatusChange}
         onFormChange={setMgmtForm}
         onManagementSubmit={handleManagementSubmit}
+        onManagementUpdate={handleManagementUpdate}
         onStartAdding={() => setIsAddingManagement(true)}
         onCancelAdding={() => setIsAddingManagement(false)}
+        onStartEditing={handleStartEditingManagement}
+        onCancelEditing={() => setIsEditingManagement(false)}
         onCommentTextChange={setCommentText}
         onCommentSubmit={handleCommentSubmit}
         onStartAddingComment={() => setIsAddingComment(true)}
