@@ -25,7 +25,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 };
 
-export const confit = {
+export const config = {
   matcher: [
     "/dashboard/register/:path*",
     "/dashboard/users/:path*",
