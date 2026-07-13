@@ -54,10 +54,22 @@ export default function DashboardLayout({
 
   const superAdminNavItems: SuperAdminNavigationItem[] = [
     {
-      label: "User Management",
+      label: "Create User",
       href: "/dashboard/register",
       icon: UserPlus,
       variant: pathname === "/dashboard/register" ? "default" : "ghost",
+    },
+    {
+      label: "Users",
+      href: "/dashboard/users",
+      icon: User,
+      variant: pathname === "/dashboard/users" ? "default" : "ghost",
+    },
+    {
+      label: "Reset Password",
+      href: "/dashboard/resetpassword",
+      icon: LockKeyhole,
+      variant: pathname === "/dashboard/resetpassword" ? "default" : "ghost",
     },
   ];
 
