@@ -54,10 +54,22 @@ export default function DashboardLayout({
 
   const superAdminNavItems: SuperAdminNavigationItem[] = [
     {
-      label: "User Management",
+      label: "Create User",
       href: "/dashboard/register",
       icon: UserPlus,
       variant: pathname === "/dashboard/register" ? "default" : "ghost",
+    },
+    {
+      label: "Users",
+      href: "/dashboard/users",
+      icon: User,
+      variant: pathname === "/dashboard/users" ? "default" : "ghost",
+    },
+    {
+      label: "Reset Password",
+      href: "/dashboard/resetpassword",
+      icon: LockKeyhole,
+      variant: pathname === "/dashboard/resetpassword" ? "default" : "ghost",
     },
   ];
 
@@ -147,7 +159,7 @@ export default function DashboardLayout({
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all group",
                   item.variant === "default"
-                    ? "bg-emerald-600 text-white shadow-sm"
+                    ? "bg-blue-600 text-white shadow-sm"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   !isSidebarOpen && "justify-center px-0"
                 )}
