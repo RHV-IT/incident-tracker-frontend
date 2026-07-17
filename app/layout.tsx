@@ -1,6 +1,6 @@
 import React from "react";
 import "@/app/globals.css";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Space_Grotesk, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/app/providers";
 import { InlineScript } from "@/components/inline-script";
@@ -11,11 +11,10 @@ const bodyFont = Plus_Jakarta_Sans({
   variable: "--font-body",
 });
 
-const displayFont = Fraunces({
+const displayFont = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["600", "700", "800", "900"],
-  style: ["normal", "italic"],
+  weight: ["500", "600", "700"],
 });
 
 export const metadata = {
