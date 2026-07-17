@@ -177,11 +177,7 @@ export default function ResetPasswordPage() {
                   The password for <strong className="text-foreground">{modifiedUser.name}</strong> (
                   {modifiedUser.email}) was updated.
                 </p>
-                <div className="grid grid-cols-2 gap-3 rounded-xl border bg-muted/30 p-4 text-xs sm:grid-cols-4">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-semibold tracking-wider text-muted-foreground/80 uppercase">User ID</span>
-                    <span className="font-medium text-foreground">{modifiedUser.id}</span>
-                  </div>
+                <div className="grid grid-cols-2 gap-3 rounded-xl border bg-muted/30 p-4 text-xs sm:grid-cols-3">
                   <div className="flex flex-col gap-0.5">
                     <span className="font-semibold tracking-wider text-muted-foreground/80 uppercase">Role</span>
                     <span className="font-medium text-foreground capitalize">{modifiedUser.role}</span>

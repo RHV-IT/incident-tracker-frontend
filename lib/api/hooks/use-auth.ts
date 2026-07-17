@@ -59,7 +59,7 @@ export function useResetPasswordMutation() {
 
 export function useChangePasswordMutation() {
   return useMutation({
-    mutationFn: (values: { currentPassword: string; newPassword: string }) =>
+    mutationFn: (values: { email: string; newPassword: string }) =>
       apiFetch<AuthUser>("/auth/userResetPassword", { method: "PUT", body: values }),
   });
 }

@@ -221,7 +221,6 @@ export default function SuperAdminUsersPage() {
                   </Avatar>
                   <div>
                     <CardTitle className="text-xl font-bold">{foundUser.name}</CardTitle>
-                    <CardDescription>Account #{foundUser.id}</CardDescription>
                   </div>
                 </div>
                 <Badge
