@@ -29,9 +29,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notification-bell";
 import { useAuthStore, useAuthUser, useIsSuperAdmin } from "@/lib/store/auth-store";
 import { useUIStore } from "@/lib/store/ui-store";
 import { useLoadingStore } from "@/lib/store/loading-store";
+import { useNotificationPolling } from "@/lib/api/hooks/use-notification-polling";
 import { NavigationItem, SuperAdminNavigationItem } from "./types/navTypes";
 import type { AuthUser } from "@/lib/types";
 
@@ -212,6 +214,8 @@ export default function DashboardLayout({
   const showLoading = useLoadingStore((s) => s.show);
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
 
+  useNotificationPolling();
+
   const handleLogout = () => {
     showLoading("Signing you out...");
     clearSession();
@@ -239,7 +243,12 @@ export default function DashboardLayout({
         <div className="mt-auto border-t p-3 space-y-2">
           <div className={cn("flex items-center", sidebarOpen ? "justify-between" : "justify-center")}>
             <UserMenu user={user} compact={!sidebarOpen} onLogout={handleLogout} />
-            {sidebarOpen && <ThemeToggle />}
+            {sidebarOpen && (
+              <div className="flex items-center">
+                <NotificationBell />
+                <ThemeToggle />
+              </div>
+            )}
           </div>
           <button
             type="button"
@@ -312,7 +321,10 @@ export default function DashboardLayout({
             <span>IncidentTracker</span>
           </Link>
 
-          <ThemeToggle />
+          <div className="flex items-center">
+            <NotificationBell />
+            <ThemeToggle />
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto bg-muted/5 p-4 sm:p-6 md:p-8">{children}</main>

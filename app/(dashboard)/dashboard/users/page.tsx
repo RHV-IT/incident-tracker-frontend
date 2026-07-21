@@ -507,7 +507,7 @@ export default function SuperAdminUsersPage() {
                     </TableRow>
                   ) : (
                     users.map((u) => (
-                      <TableRow key={u.id} className="group">
+                      <TableRow key={u.email} className="group">
                         <TableCell className="py-3 pl-4">
                           <button
                             type="button"
