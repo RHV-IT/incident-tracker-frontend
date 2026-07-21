@@ -19,4 +19,9 @@ export const queryKeys = {
   logs: {
     forIncident: (incidentId: number) => ["logs", incidentId] as const,
   },
+  users: {
+    all: ["users"] as const,
+    list: (page: number, limit: number) => ["users", "list", page, limit] as const,
+    search: (query: string) => ["users", "search", query] as const,
+  },
 };

@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+export const editUserSchema = z.object({
+  name: z.string().min(1, "Full name is required"),
+  email: z.string().min(1, "Email is required").email("Enter a valid email address"),
+  role: z.enum(["reporter", "supervisor", "admin", "manager", "superadmin"], {
+    message: "Select a role",
+  }),
+  department: z.string().min(1, "Department is required"),
+});
+
+export type EditUserValues = z.infer<typeof editUserSchema>;
+
 export const searchUserSchema = z.object({
   email: z.string().min(1, "Email is required").email("Enter a valid email address"),
 });
