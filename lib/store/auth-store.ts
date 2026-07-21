@@ -36,6 +36,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "incident-tracker-auth",
+      onRehydrateStorage: () => (state) => {
+        setRoleCookie(state?.user?.role ?? null);
+      },
     }
   )
 );
