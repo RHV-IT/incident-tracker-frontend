@@ -18,7 +18,7 @@ export const ROLE_OPTIONS = [
 export const registerSchema = z.object({
   name: z.string().min(1, "Full name is required"),
   email: z.string().min(1, "Email is required").email("Enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
   role: z.enum(["reporter", "supervisor", "admin", "manager", "superadmin"], {
     message: "Select a role",
   }),

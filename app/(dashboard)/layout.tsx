@@ -30,6 +30,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuthStore, useAuthUser, useIsSuperAdmin } from "@/lib/store/auth-store";
 import { useUIStore } from "@/lib/store/ui-store";
+import { useLoadingStore } from "@/lib/store/loading-store";
 import { NavigationItem, SuperAdminNavigationItem } from "./types/navTypes";
 import type { AuthUser } from "@/lib/types";
 
@@ -201,9 +202,11 @@ export default function DashboardLayout({
   const clearSession = useAuthStore((s) => s.clear);
   const sidebarOpen = useUIStore((s) => s.sidebarOpen);
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
+  const showLoading = useLoadingStore((s) => s.show);
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
 
   const handleLogout = () => {
+    showLoading("Signing you out...");
     clearSession();
     router.push("/login");
   };

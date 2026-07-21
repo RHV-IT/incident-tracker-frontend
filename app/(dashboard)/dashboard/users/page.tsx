@@ -35,6 +35,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -359,6 +369,7 @@ export default function SuperAdminUsersPage() {
 
   const [viewingUser, setViewingUser] = useState<AuthUser | null>(null);
   const [editingUser, setEditingUser] = useState<AuthUser | null>(null);
+  const [confirmingUser, setConfirmingUser] = useState<AuthUser | null>(null);
 
   const users = isSearching ? (searchResults.data?.users ?? []) : (usersQuery.data?.data ?? []);
   const pagination = usersQuery.data?.pagination ?? null;
@@ -391,6 +402,22 @@ export default function SuperAdminUsersPage() {
         if (!handleAuthOrForbidden(err)) notify.apiError(`Couldn't ${action} account`, err);
       },
     });
+  };
+
+  // Enabling is low-risk and fires immediately; disabling locks someone out of
+  // the system, so it goes through a confirmation step first.
+  const requestToggleStatus = (user: AuthUser) => {
+    if (user.disabled) {
+      toggleStatus(user);
+    } else {
+      setViewingUser(null);
+      setConfirmingUser(user);
+    }
+  };
+
+  const confirmDisable = () => {
+    if (confirmingUser) toggleStatus(confirmingUser);
+    setConfirmingUser(null);
   };
 
   return (
@@ -480,7 +507,7 @@ export default function SuperAdminUsersPage() {
                     </TableRow>
                   ) : (
                     users.map((u) => (
-                      <TableRow key={u.email} className="group">
+                      <TableRow key={u.id} className="group">
                         <TableCell className="py-3 pl-4">
                           <button
                             type="button"
@@ -525,11 +552,11 @@ export default function SuperAdminUsersPage() {
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               {u.disabled ? (
-                                <DropdownMenuItem onClick={() => toggleStatus(u)} className="gap-2">
+                                <DropdownMenuItem onClick={() => requestToggleStatus(u)} className="gap-2">
                                   <UserCheck className="h-4 w-4" /> Enable
                                 </DropdownMenuItem>
                               ) : (
-                                <DropdownMenuItem onClick={() => toggleStatus(u)} variant="destructive" className="gap-2">
+                                <DropdownMenuItem onClick={() => requestToggleStatus(u)} variant="destructive" className="gap-2">
                                   <UserX className="h-4 w-4" /> Disable
                                 </DropdownMenuItem>
                               )}
@@ -553,6 +580,7 @@ export default function SuperAdminUsersPage() {
                     className="h-8 w-8"
                     onClick={() => setPage((p) => p - 1)}
                     disabled={page <= 1}
+                    aria-label="Previous page"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -565,6 +593,7 @@ export default function SuperAdminUsersPage() {
                     className="h-8 w-8"
                     onClick={() => setPage((p) => p + 1)}
                     disabled={page >= pagination.total_pages}
+                    aria-label="Next page"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -582,10 +611,28 @@ export default function SuperAdminUsersPage() {
           setViewingUser(null);
           setEditingUser(u);
         }}
-        onToggleStatus={toggleStatus}
+        onToggleStatus={requestToggleStatus}
         isMutating={isMutatingStatus}
       />
       <UserEditDialog user={editingUser} onClose={() => setEditingUser(null)} />
+
+      <AlertDialog open={!!confirmingUser} onOpenChange={(open) => !open && setConfirmingUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disable {confirmingUser?.name}&apos;s account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              They will immediately lose the ability to sign in. You can re-enable the account at any
+              time from this page.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={confirmDisable}>
+              Disable Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

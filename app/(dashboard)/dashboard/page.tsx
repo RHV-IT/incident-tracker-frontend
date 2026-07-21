@@ -19,24 +19,7 @@ import { IncidentReport, IncidentStatus, VALID_STATUSES, formatStatusText } from
 import { useIncidentsQuery } from "@/lib/api/hooks/use-incidents";
 import { IncidentTable } from "./IncidentTable";
 import { IncidentDetails } from "./IncidentDetails";
-
-function pad2(n: number) {
-  return String(n).padStart(2, "0");
-}
-
-function toIsoDate(date: Date) {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
-}
-
-function parseIsoDate(value: string) {
-  if (!value) return undefined;
-  const d = new Date(`${value}T00:00:00`);
-  return Number.isNaN(d.getTime()) ? undefined : d;
-}
-
-function formatShortDate(date: Date) {
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
+import { toIsoDate, parseIsoDate, formatShortDate } from "@/lib/utils/date";
 
 export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState<number>(1);
