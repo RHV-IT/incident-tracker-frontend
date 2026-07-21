@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   ShieldAlert,
   LayoutDashboard,
+  ClipboardList,
   FilePlus2,
   LogOut,
   UserPlus,
@@ -37,10 +38,16 @@ import type { AuthUser } from "@/lib/types";
 function getNavItems(pathname: string): NavigationItem[] {
   return [
     {
-      label: "View Incidents",
+      label: "Overview",
       href: "/dashboard",
       icon: LayoutDashboard,
       variant: pathname === "/dashboard" ? "default" : "ghost",
+    },
+    {
+      label: "View Incidents",
+      href: "/dashboard/incidents",
+      icon: ClipboardList,
+      variant: pathname === "/dashboard/incidents" ? "default" : "ghost",
     },
     {
       label: "Report an Incident",
