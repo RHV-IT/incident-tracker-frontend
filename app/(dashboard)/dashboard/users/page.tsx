@@ -103,14 +103,13 @@ const ROLE_BADGE_STYLES: Record<string, string> = {
   superadmin: "border-primary/20 bg-primary/10 text-primary",
   admin: "border-violet-500/20 bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400",
   manager: "border-amber-500/20 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
-  supervisor: "border-sky-500/20 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
-  reporter: "border-border bg-muted text-muted-foreground",
+  supervisor: "border-sky-500/20 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400"
 };
 
 function RoleBadge({ role }: { role: string }) {
   const key = role?.toLowerCase();
   return (
-    <Badge variant="outline" className={cn("capitalize", ROLE_BADGE_STYLES[key] || ROLE_BADGE_STYLES.reporter)}>
+    <Badge variant="outline" className={cn("capitalize", ROLE_BADGE_STYLES[key] || ROLE_BADGE_STYLES.null)}>
       {role}
     </Badge>
   );
@@ -241,7 +240,7 @@ function UserEditDialog({ user, onClose }: { user: AuthUser | null; onClose: () 
     formState: { errors },
   } = useForm<EditUserValues>({
     resolver: zodResolver(editUserSchema),
-    defaultValues: { name: "", email: "", role: "reporter", department: "" },
+    defaultValues: { name: "", email: "", role: "supervisor", department: "" },
   });
 
   useEffect(() => {

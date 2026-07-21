@@ -56,7 +56,7 @@ const CAPABILITIES = [
   {
     icon: Users,
     title: "Role-based access",
-    description: "Reporters, admins and super admins each see exactly the tools their role needs.",
+    description: "supervisors, admins and super admins each see exactly the tools their role needs.",
     href: null,
     cta: null,
   },

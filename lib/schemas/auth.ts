@@ -8,7 +8,6 @@ export const loginSchema = z.object({
 export type LoginValues = z.infer<typeof loginSchema>;
 
 export const ROLE_OPTIONS = [
-  { value: "reporter", label: "Reporter" },
   { value: "supervisor", label: "Supervisor" },
   { value: "admin", label: "Admin" },
   { value: "manager", label: "Manager" },
