@@ -43,7 +43,7 @@ export function useNotificationPolling() {
 
     const isFirstRun = seenIncidentIds.length === 0 && Object.keys(seenStatuses).length === 0;
     const result = diffIncidentsForNotifications({
-      incidents: data.data,
+      incidents: data.data ?? [],
       seenIncidentIds,
       seenStatuses,
       isFirstRun,

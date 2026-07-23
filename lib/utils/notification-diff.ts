@@ -30,6 +30,7 @@ export function diffIncidentsForNotifications(
   { incidents, seenIncidentIds, seenStatuses, isFirstRun }: NotificationDiffInput,
   now: () => string = () => new Date().toISOString()
 ): NotificationDiffResult {
+  incidents = incidents ?? [];
   const nextSeenStatuses: Record<number, IncidentStatus> = { ...seenStatuses };
 
   if (isFirstRun) {
